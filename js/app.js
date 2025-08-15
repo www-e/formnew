@@ -1,36 +1,38 @@
 class StudentRegistrationApp {
     constructor() {
-        // Check if we are on a page that needs this app logic
         if (document.getElementById('studentForm')) {
-            this.version = '1.1.0-server-based';
+            this.version = '1.2.0-refactored';
+            
+            // Use the globally available context
+            this.fileManager = window.appContext.fileManager;
+            this.storageManager = window.appContext.storageManager;
+            
+            this.formHandler = new FormHandler();
+            this.tableManager = new TableManager();
+            this.exportManager = new ExportManager();
+            window.app = this; // Maintain global reference for notifications
+            
             this.initialize();
         }
     }
 
     async initialize() {
-        window.fileManager = new FileManager();
-        window.storageManager = new StorageManager();
-        window.formHandler = new FormHandler();
-        window.tableManager = new TableManager();
-        window.exportManager = new ExportManager();
-        window.app = this;
-        
-        console.log(`✅ Student Registration System v${this.version} initialized.`);
+        console.log(`✅ Student Page v${this.version} initialized.`);
         await this.loadInitialData();
     }
 
     async loadInitialData() {
-        const result = await window.fileManager.loadFile();
+        const result = await this.fileManager.loadFile();
         const statusEl = document.getElementById('db-status');
 
-        if (result.success || result.isNew) {
-            window.storageManager.loadData(result.data);
-            window.tableManager.loadStudents();
+        if (result.success) {
+            this.storageManager.loadData(result.data);
+            this.tableManager.loadStudents(); // Use the loaded data
             this.updateStatistics();
             this.enableUI(result.isNew);
         } else {
             statusEl.innerHTML = '<i class="fas fa-times-circle text-red-500 ml-2"></i><span class="text-red-500">فشل تحميل البيانات</span>';
-            this.showErrorMessage("فشل تحميل قاعدة البيانات. تأكد من تشغيل الخادم المحلي.");
+            this.showErrorMessage("فشل تحميل قاعدة البيانات.");
         }
     }
 
@@ -42,13 +44,11 @@ class StudentRegistrationApp {
             statusEl.innerHTML = '<i class="fas fa-check-circle text-green-500 ml-2"></i><span class="text-green-600">البيانات محملة</span>';
         }
         
-        const mainContent = document.getElementById('main-content');
-        mainContent.classList.remove('opacity-50', 'pointer-events-none');
-        this.showSuccessMessage("النظام جاهز للاستخدام.");
+        document.getElementById('main-content').classList.remove('opacity-25', 'pointer-events-none');
     }
 
     updateStatistics() {
-        const stats = window.storageManager.getStatistics();
+        const stats = this.storageManager.getStatistics();
         document.getElementById('totalStudents').textContent = stats.totalStudents;
         document.getElementById('totalRevenue').textContent = stats.totalRevenue.toLocaleString('ar-EG');
         document.getElementById('firstGradeCount').textContent = stats.gradeDistribution['first'] || 0;
@@ -63,13 +63,8 @@ class StudentRegistrationApp {
         });
     }
 
-    showSuccessMessage(message) {
-        this.showNotification(message, 'success');
-    }
-
-    showErrorMessage(message) {
-        this.showNotification(message, 'error');
-    }
+    showSuccessMessage(message) { this.showNotification(message, 'success'); }
+    showErrorMessage(message) { this.showNotification(message, 'error'); }
 
     showNotification(message, type) {
         const notification = document.createElement('div');
@@ -85,5 +80,10 @@ class StudentRegistrationApp {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new StudentRegistrationApp();
+    // Wait for the main context to be ready before initializing the page
+    if (window.appContext) {
+        new StudentRegistrationApp();
+    } else {
+        console.error("AppContext is not ready!");
+    }
 });

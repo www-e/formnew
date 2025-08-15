@@ -1,6 +1,6 @@
 class AttendancePage {
     constructor() {
-        this.version = '1.1.0';
+        this.version = '1.2.1-cleanup';
         // UI Elements
         this.mainContent = document.getElementById('main-content');
         this.dbStatusEl = document.getElementById('db-status');
@@ -13,22 +13,17 @@ class AttendancePage {
         this.tableHeader = document.getElementById('attendance-table-header');
         this.tableBody = document.getElementById('attendance-table-body');
         this.saveBtn = document.getElementById('save-attendance-btn');
+        this.quickAttendanceBtn = document.getElementById('quick-attendance-btn');
 
         // State
         this.currentDate = new Date();
         this.allStudents = [];
         this.groupSchedules = this.getGroupSchedules();
-
-        // Managers
+        
+        // Managers & Components
         this.fileManager = new FileManager();
         this.storageManager = new StorageManager();
-
-        // Modal Elements
-        this.modal = document.getElementById('attendance-modal');
-        this.modalStatusRadios = this.modal.querySelectorAll('input[name="attendance-status"]');
-        this.modalSaveBtn = this.modal.querySelector('#modal-save-btn');
-        this.modalCloseBtn = this.modal.querySelector('#modal-close-btn');
-        this.activeCell = null; // keep track of clicked cell
+        this.quickAttendanceModal = null; // This will be initialized after data load
 
         this.initialize();
     }
@@ -55,11 +50,10 @@ class AttendancePage {
 
     async loadInitialData() {
         const result = await this.fileManager.loadFile();
-        if (result.success || result.isNew) {
+        if (result.success) {
             this.storageManager.loadData(result.data);
             this.allStudents = this.storageManager.getAllStudents();
             this.enableUI(result.isNew);
-            this.populateGroupFilter();
         } else {
             this.dbStatusEl.innerHTML = '<i class="fas fa-times-circle text-red-500 ml-2"></i><span class="text-red-500">فشل التحميل</span>';
         }
@@ -72,10 +66,16 @@ class AttendancePage {
             this.dbStatusEl.innerHTML = '<i class="fas fa-check-circle text-green-500 ml-2"></i><span class="text-green-600">محمل</span>';
         }
         this.mainContent.classList.remove('opacity-25', 'pointer-events-none');
+        
+        // Initialize the modal component. It's now safe to do so.
+        this.quickAttendanceModal = new QuickAttendance(this.storageManager, () => this.render());
+        window.attendancePage = this; // Make this page's instance globally available for the modal
+
         this.setupEventListeners();
+        this.populateGroupFilter();
         this.render();
     }
-
+    
     setupEventListeners() {
         this.prevMonthBtn.addEventListener('click', () => this.goToPreviousMonth());
         this.nextMonthBtn.addEventListener('click', () => this.goToNextMonth());
@@ -85,20 +85,15 @@ class AttendancePage {
             this.render();
         });
         this.groupFilter.addEventListener('change', () => this.render());
-        this.saveBtn.addEventListener('click', async () => {
-            await this.storageManager.persistData();
-        });
-
-        // Modal event listeners
-        this.modalSaveBtn.addEventListener('click', () => this.saveModalAttendance());
-        this.modalCloseBtn.addEventListener('click', () => this.closeModal());
+        this.saveBtn.addEventListener('click', async () => await this.storageManager.persistData());
+        this.quickAttendanceBtn.addEventListener('click', () => this.quickAttendanceModal.show());
     }
 
     populateGroupFilter() {
         this.groupFilter.innerHTML = '<option value="all">كل المجموعات</option>';
         const selectedGrade = this.gradeFilter.value;
         const seenGroups = new Set();
-
+        
         this.allStudents.forEach(student => {
             if ((selectedGrade === 'all' || student.grade === selectedGrade) && !seenGroups.has(student.groupTime)) {
                 this.groupFilter.add(new Option(student.groupTimeText, student.groupTime));
@@ -106,7 +101,7 @@ class AttendancePage {
             }
         });
     }
-
+    
     goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.render(); }
     goToNextMonth() { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.render(); }
     goToToday() { this.currentDate = new Date(); this.render(); }
@@ -135,9 +130,7 @@ class AttendancePage {
         const dayNames = ['احد', 'اثنين', 'ثلاثاء', 'اربعاء', 'خميس', 'جمعة', 'سبت'];
         let headerHTML = '<tr><th class="border p-2 min-w-[200px]">اسم الطالب</th>';
         dates.forEach(date => {
-            const day = dayNames[date.getDay()];
-            const dateNum = date.getDate();
-            headerHTML += `<th class="border p-2 text-center">${day}<br>${dateNum}</th>`;
+            headerHTML += `<th class="border p-2 text-center">${dayNames[date.getDay()]}<br>${date.getDate()}</th>`;
         });
         headerHTML += '</tr>';
         this.tableHeader.innerHTML = headerHTML;
@@ -151,76 +144,23 @@ class AttendancePage {
 
         let bodyHTML = '';
         const statusMap = {
-            present: { class: 'bg-green-200 hover:bg-green-300', text: 'ح' }, // حاضر
-            absent: { class: 'bg-red-200 hover:bg-red-300', text: 'غ' },     // غائب
-            excused: { class: 'bg-yellow-200 hover:bg-yellow-300', text: 'ع' }  // عذر
+            present: { class: 'bg-green-200', text: 'ح' },
         };
-        const defaultStatus = { class: 'bg-gray-100 hover:bg-gray-200', text: '-' };
+        const defaultStatus = { class: 'bg-gray-100', text: '-' };
 
         students.forEach(student => {
             bodyHTML += `<tr class="table-row"><td class="border p-2 font-semibold">${student.name}</td>`;
             dates.forEach(date => {
-                const dateString = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                const dateString = date.toISOString().split('T')[0];
                 const statusKey = student.attendance ? student.attendance[dateString] : undefined;
                 const status = statusMap[statusKey] || defaultStatus;
-                bodyHTML += `<td class="border p-2 text-center cursor-pointer ${status.class}" data-student-id="${student.id}" data-date="${dateString}">${status.text}</td>`;
+                bodyHTML += `<td class="border p-2 text-center ${status.class}">${status.text}</td>`;
             });
             bodyHTML += '</tr>';
         });
         this.tableBody.innerHTML = bodyHTML;
-
-        // Add event listeners to the new cells to open modal
-        this.tableBody.querySelectorAll('td[data-student-id]').forEach(cell => {
-            cell.addEventListener('click', (e) => this.openModal(e));
-        });
     }
-
-    openModal(event) {
-        const cell = event.target;
-        this.activeCell = cell;
-        const studentId = cell.dataset.studentId;
-        const date = cell.dataset.date;
-        const student = this.storageManager.data.students.find(s => s.id == studentId);
-
-        if (!student) return;
-        if (!student.attendance) student.attendance = {};
-
-        const currentStatus = student.attendance[date];
-
-        // Set the modal radios based on current status
-        this.modalStatusRadios.forEach(radio => {
-            radio.checked = (radio.value === currentStatus);
-        });
-
-        this.modal.style.display = 'block';
-    }
-
-    closeModal() {
-        this.modal.style.display = 'none';
-        this.activeCell = null;
-    }
-
-    saveModalAttendance() {
-        if (!this.activeCell) return;
-
-        const studentId = this.activeCell.dataset.studentId;
-        const date = this.activeCell.dataset.date;
-        const selectedStatus = Array.from(this.modalStatusRadios).find(r => r.checked)?.value;
-        const student = this.storageManager.data.students.find(s => s.id == studentId);
-
-        if (!student) return;
-        if (!student.attendance) student.attendance = {};
-
-        if (selectedStatus) {
-            student.attendance[date] = selectedStatus;
-        } else {
-            delete student.attendance[date]; // Reset to default
-        }
-
-        this.closeModal();
-        this.render();
-    }
-
+    
     render() {
         this.updateMonthDisplay();
         const selectedGrade = this.gradeFilter.value;
@@ -231,7 +171,7 @@ class AttendancePage {
             this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>';
             return;
         }
-
+        
         const filteredStudents = this.allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup);
         const groupSchedule = this.groupSchedules[selectedGroup];
         const scheduledDates = this.getScheduledDatesForMonth(groupSchedule);

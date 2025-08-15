@@ -17,9 +17,9 @@ class FileManager {
             const data = await response.json();
             return { success: true, isNew: false, data: data };
         } catch (error) {
-            console.error('Failed to load or parse database.json:', error);
-            // This can happen if the file is empty or malformed. Start fresh.
-            return { success: false, isNew: true, data: { students: [], settings: { lastId: 0 } } };
+            console.warn('Could not parse database.json. It might be empty or malformed. Starting with a fresh database.', error);
+            // Treat as a new database if parsing fails. This is a successful recovery.
+            return { success: true, isNew: true, data: { students: [], settings: { lastId: 0 } } };
         }
     }
 }

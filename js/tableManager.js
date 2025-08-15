@@ -115,6 +115,7 @@ class TableManager {
             row.className = 'table-row border-b border-gray-200';
             
             row.innerHTML = `
+            <td class="border border-gray-300 px-4 py-3"><div class="font-mono font-bold text-gray-700">${student.id}</div></td>
                 <td class="border border-gray-300 px-4 py-3"><div class="font-semibold">${student.name}</div></td>
                 <td class="border border-gray-300 px-4 py-3"><div class="font-mono">${student.studentPhone}</div></td>
                 <td class="border border-gray-300 px-4 py-3"><div class="font-mono">${student.parentPhone}</div></td>
