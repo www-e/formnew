@@ -56,7 +56,18 @@ class FormHandler {
     }
 
     initializeEventListeners() {
-        this.gradeSelect.addEventListener('change', (e) => this.handleGradeChange(e.target.value));
+        this.gradeSelect.addEventListener('change', (e) => {
+            const grade = e.target.value;
+            this.handleGradeChange(grade);
+            if (grade && !this.editingId) {
+                // Generate a new ID only when adding a new student
+                const newId = window.storageManager.generateId(grade);
+                this.studentIdInput.value = newId;
+            } else {
+                this.studentIdInput.value = ''; // Clear if no grade or if editing
+            }
+        });
+        
         this.sectionSelect.addEventListener('change', (e) => this.handleSectionChange(e.target.value));
         this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
@@ -158,6 +169,7 @@ class FormHandler {
         
         const formData = new FormData(this.form);
         const studentData = {
+            id: this.editingId || this.studentIdInput.value, // Use new ID or existing one
             name: formData.get('studentName').trim(),
             studentPhone: formData.get('studentPhone'),
             parentPhone: formData.get('parentPhone'),
@@ -208,6 +220,7 @@ class FormHandler {
 
     editStudent(student) {
         this.editingId = student.id;
+        this.studentIdInput.value = student.id; // Show existing ID when editing
         
         document.getElementById('studentName').value = student.name;
         document.getElementById('studentPhone').value = student.studentPhone;
@@ -250,6 +263,7 @@ class FormHandler {
         this.sectionGroup.style.display = 'none';
         this.sectionSelect.removeAttribute('required');
         this.editingId = null;
+        this.studentIdInput.value = ''; // Clear the ID field on reset
         this.updateSubmitButton(false);
         this.form.querySelectorAll('.border-red-500').forEach(el => {
             el.classList.remove('border-red-500');

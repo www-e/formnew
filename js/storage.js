@@ -64,6 +64,7 @@ class StorageManager {
         if (duplicateStudent) {
             return { success: false, message: 'رقم هاتف الطالب مسجل من قبل' };
         }
+        studentData.attendance = {};
 
         this.data.students.push(studentData);
         await this.persistData(); // This will now trigger a download

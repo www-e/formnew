@@ -1,5 +1,6 @@
 class StudentRegistrationApp {
     constructor() {
+        // Check if we are on a page that needs this app logic
         if (document.getElementById('studentForm')) {
             this.version = '1.1.0-server-based';
             this.initialize();
@@ -50,20 +51,25 @@ class StudentRegistrationApp {
         const stats = window.storageManager.getStatistics();
         document.getElementById('totalStudents').textContent = stats.totalStudents;
         document.getElementById('totalRevenue').textContent = stats.totalRevenue.toLocaleString('ar-EG');
-        document.getElementById('firstGradeCount').textContent = stats.gradeDistribution['1'] || 0;
-        document.getElementById('thirdGradeCount').textContent = stats.gradeDistribution['3'] || 0;
+        document.getElementById('firstGradeCount').textContent = stats.gradeDistribution['first'] || 0;
+        document.getElementById('thirdGradeCount').textContent = stats.gradeDistribution['third'] || 0;
         this.animateStatCards();
     }
 
     animateStatCards() {
         document.querySelectorAll('.stat-card > div:first-child').forEach(card => {
             card.style.transform = 'scale(1.1)';
-            setTimeout(() => card.style.transform = 'scale(1)'), 250);
+            setTimeout(() => { card.style.transform = 'scale(1)'; }, 250);
         });
     }
 
-    showSuccessMessage(message) { this.showNotification(message, 'success'); }
-    showErrorMessage(message) { this.showNotification(message, 'error'); }
+    showSuccessMessage(message) {
+        this.showNotification(message, 'success');
+    }
+
+    showErrorMessage(message) {
+        this.showNotification(message, 'error');
+    }
 
     showNotification(message, type) {
         const notification = document.createElement('div');
@@ -74,7 +80,7 @@ class StudentRegistrationApp {
         notification.innerHTML = `<i class="fas ${icon} ml-3"></i><p>${message}</p>`;
         
         document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 4000);
+        setTimeout(() => { notification.remove(); }, 4000);
     }
 }
 
