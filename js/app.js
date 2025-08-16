@@ -27,6 +27,7 @@ class StudentRegistrationApp {
 
         if (result.success) {
             this.storageManager.loadData(result.data);
+            window.storageManager = this.storageManager;
             this.tableManager.loadStudents(); // Use the loaded data
             this.updateStatistics();
             this.enableUI(result.isNew);
