@@ -78,7 +78,10 @@ class QuickAttendance {
             student.attendance = {};
         }
         student.attendance[todayString] = 'present';
-        
+
+        // **FIX: Auto-save the attendance data immediately**
+        this.storageManager.autoSave();
+
         this.showMessage(`تم تسجيل حضور الطالب: ${student.name}`);
 
         // Clear the input for the next entry
@@ -89,4 +92,5 @@ class QuickAttendance {
             this.onAttendanceMarked();
         }
     }
+
 }

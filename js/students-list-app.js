@@ -1,20 +1,16 @@
-class StudentRegistrationApp {
+class StudentsListApp {
     constructor() {
-        if (document.getElementById('studentForm')) {
-            this.version = '2.0.0-production';
+        if (document.getElementById('studentsTableBody')) {
+            this.version = '2.0.0-modular';
             
-            // Use the globally available context
             this.fileManager = window.appContext.fileManager;
             this.storageManager = window.appContext.storageManager;
             
-            this.formHandler = new FormHandler();
             this.tableManager = new TableManager();
             this.exportManager = new ExportManager();
             
-            // FIXED: Make managers globally available
             window.app = this;
             window.tableManager = this.tableManager;
-            window.formHandler = this.formHandler;
             window.exportManager = this.exportManager;
             
             this.initialize();
@@ -22,7 +18,7 @@ class StudentRegistrationApp {
     }
 
     async initialize() {
-        console.log(`✅ Student Page v${this.version} initialized.`);
+        console.log(`✅ Students List v${this.version} initialized.`);
         await this.loadInitialData();
         this.setupEventListeners();
     }
@@ -39,23 +35,19 @@ class StudentRegistrationApp {
             this.enableUI(result.isNew);
         } else {
             statusEl.innerHTML = '<i class="fas fa-times-circle text-red-500 ml-2"></i><span class="text-red-500">فشل تحميل البيانات</span>';
-            this.showErrorMessage("فشل تحميل قاعدة البيانات.");
         }
     }
 
     setupEventListeners() {
-        // Export Excel button
         document.getElementById('exportExcelBtn')?.addEventListener('click', () => {
             this.exportManager.setStudentsData(this.storageManager.getAllStudents());
             this.exportManager.exportToExcel();
         });
 
-        // Clear filters button
         document.getElementById('clearFiltersBtn')?.addEventListener('click', () => {
             this.tableManager.clearFilters();
         });
 
-        // Backup button
         document.getElementById('backupBtn')?.addEventListener('click', async () => {
             const result = await this.storageManager.createBackup();
             if (result.success) {
@@ -65,7 +57,6 @@ class StudentRegistrationApp {
             }
         });
 
-        // Restore button  
         document.getElementById('restoreBtn')?.addEventListener('click', async () => {
             if (confirm('هل أنت متأكد؟ سيتم استبدال جميع البيانات الحالية.')) {
                 const result = await this.storageManager.restoreBackup();
@@ -74,18 +65,6 @@ class StudentRegistrationApp {
                 } else {
                     this.showErrorMessage(result.message);
                 }
-            }
-        });
-
-        // CSV Import button
-        document.getElementById('importCSVBtn')?.addEventListener('click', async () => {
-            const result = await this.storageManager.importStudentsFromCSV();
-            if (result.success) {
-                this.showSuccessMessage(result.message);
-                this.tableManager.loadStudents();
-                this.updateStatistics();
-            } else {
-                this.showErrorMessage(result.message);
             }
         });
     }
@@ -107,14 +86,6 @@ class StudentRegistrationApp {
         document.getElementById('totalRevenue').textContent = stats.totalRevenue.toLocaleString('ar-EG');
         document.getElementById('firstGradeCount').textContent = stats.gradeDistribution['first'] || 0;
         document.getElementById('thirdGradeCount').textContent = stats.gradeDistribution['third'] || 0;
-        this.animateStatCards();
-    }
-
-    animateStatCards() {
-        document.querySelectorAll('.stat-card > div:first-child').forEach(card => {
-            card.style.transform = 'scale(1.1)';
-            setTimeout(() => { card.style.transform = 'scale(1)'; }, 250);
-        });
     }
 
     showSuccessMessage(message) { this.showNotification(message, 'success'); }
@@ -135,7 +106,7 @@ class StudentRegistrationApp {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.appContext) {
-        new StudentRegistrationApp();
+        new StudentsListApp();
     } else {
         console.error("AppContext is not ready!");
     }

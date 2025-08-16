@@ -19,7 +19,7 @@ class AttendancePage {
         this.currentDate = new Date();
         this.allStudents = [];
         this.groupSchedules = this.getGroupSchedules();
-        
+
         // Managers & Components
         this.fileManager = new FileManager();
         this.storageManager = new StorageManager();
@@ -66,7 +66,7 @@ class AttendancePage {
             this.dbStatusEl.innerHTML = '<i class="fas fa-check-circle text-green-500 ml-2"></i><span class="text-green-600">محمل</span>';
         }
         this.mainContent.classList.remove('opacity-25', 'pointer-events-none');
-        
+
         // Initialize the modal component. It's now safe to do so.
         this.quickAttendanceModal = new QuickAttendance(this.storageManager, () => this.render());
         window.attendancePage = this; // Make this page's instance globally available for the modal
@@ -75,7 +75,7 @@ class AttendancePage {
         this.populateGroupFilter();
         this.render();
     }
-    
+
     setupEventListeners() {
         this.prevMonthBtn.addEventListener('click', () => this.goToPreviousMonth());
         this.nextMonthBtn.addEventListener('click', () => this.goToNextMonth());
@@ -93,7 +93,7 @@ class AttendancePage {
         this.groupFilter.innerHTML = '<option value="all">كل المجموعات</option>';
         const selectedGrade = this.gradeFilter.value;
         const seenGroups = new Set();
-        
+
         this.allStudents.forEach(student => {
             if ((selectedGrade === 'all' || student.grade === selectedGrade) && !seenGroups.has(student.groupTime)) {
                 this.groupFilter.add(new Option(student.groupTimeText, student.groupTime));
@@ -101,7 +101,7 @@ class AttendancePage {
             }
         });
     }
-    
+
     goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.render(); }
     goToNextMonth() { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.render(); }
     goToToday() { this.currentDate = new Date(); this.render(); }
@@ -128,17 +128,24 @@ class AttendancePage {
 
     renderTableHeader(dates) {
         const dayNames = ['احد', 'اثنين', 'ثلاثاء', 'اربعاء', 'خميس', 'جمعة', 'سبت'];
-        let headerHTML = '<tr><th class="border p-2 min-w-[200px]">اسم الطالب</th>';
+        let headerHTML = `
+        <tr>
+            <th class="border p-2 text-center" style="width: 40px;">#</th>
+            <th class="border p-2 text-center" style="width: 120px;">كود الطالب</th>
+            <th class="border p-2 min-w-[200px]">اسم الطالب</th>
+    `;
+
         dates.forEach(date => {
-            headerHTML += `<th class="border p-2 text-center">${dayNames[date.getDay()]}<br>${date.getDate()}</th>`;
+            headerHTML += `<th class="border p-2 text-center" style="width: 80px;">${dayNames[date.getDay()]}<br>${date.getDate()}</th>`;
         });
         headerHTML += '</tr>';
         this.tableHeader.innerHTML = headerHTML;
     }
 
+
     renderTableBody(students, dates) {
         if (students.length === 0) {
-            this.tableBody.innerHTML = `<tr><td colspan="${dates.length + 1}" class="text-center py-12 text-gray-500">لا يوجد طلاب في هذه المجموعة.</td></tr>`;
+            this.tableBody.innerHTML = `<tr><td colspan="${dates.length + 3}" class="text-center py-12 text-gray-500">لا يوجد طلاب في هذه المجموعة.</td></tr>`;
             return;
         }
 
@@ -148,8 +155,14 @@ class AttendancePage {
         };
         const defaultStatus = { class: 'bg-gray-100', text: '-' };
 
-        students.forEach(student => {
-            bodyHTML += `<tr class="table-row"><td class="border p-2 font-semibold">${student.name}</td>`;
+        students.forEach((student, index) => {
+            bodyHTML += `
+            <tr class="table-row">
+                <td class="border p-2 text-center font-bold">${index + 1}</td>
+                <td class="border p-2 text-center font-mono text-sm">${student.id}</td>
+                <td class="border p-2 font-semibold">${student.name}</td>
+        `;
+
             dates.forEach(date => {
                 const dateString = date.toISOString().split('T')[0];
                 const statusKey = student.attendance ? student.attendance[dateString] : undefined;
@@ -160,7 +173,8 @@ class AttendancePage {
         });
         this.tableBody.innerHTML = bodyHTML;
     }
-    
+
+
     render() {
         this.updateMonthDisplay();
         const selectedGrade = this.gradeFilter.value;
@@ -171,7 +185,7 @@ class AttendancePage {
             this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>';
             return;
         }
-        
+
         const filteredStudents = this.allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup);
         const groupSchedule = this.groupSchedules[selectedGroup];
         const scheduledDates = this.getScheduledDatesForMonth(groupSchedule);
@@ -181,7 +195,8 @@ class AttendancePage {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => { new AttendancePage();
+document.addEventListener('DOMContentLoaded', () => {
+    new AttendancePage();
 
     setTimeout(() => { // Wait for page to fully load
         document.getElementById('backupBtn')?.addEventListener('click', async () => {
@@ -199,4 +214,4 @@ document.addEventListener('DOMContentLoaded', () => { new AttendancePage();
 
 
 
- });
+});

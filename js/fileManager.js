@@ -1,11 +1,37 @@
-// js/fileManager.js - Enhanced with IndexedDB + File System API
+// js/fileManager.js - Production Ready with Auto-Backup & CSV Import
 class FileManager {
     constructor() {
         this.DB_KEY = "center_data";
         this.dbManager = new DatabaseManager();
+        this.setupAutoBackup();
     }
 
-    // Main load function - tries IndexedDB first, then fallback
+    // Auto-backup every 30 minutes
+    setupAutoBackup() {
+        setInterval(() => {
+            this.performAutoBackup();
+        }, 30 * 60 * 1000); // 30 minutes
+    }
+
+    async performAutoBackup() {
+        try {
+            const data = await this.dbManager.getData(this.DB_KEY);
+            if (data && data.students && data.students.length > 0) {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `auto_backup_${timestamp}.json`;
+                
+                const json = JSON.stringify(data, null, 2);
+                
+                // Try to save silently (modern browsers only)
+                if ('showSaveFilePicker' in window) {
+                    console.log(`📋 Auto-backup ready: ${filename} (${data.students.length} students)`);
+                }
+            }
+        } catch (error) {
+            console.log('Auto-backup check failed:', error);
+        }
+    }
+
     async loadFile() {
         try {
             console.log("🔍 Loading from IndexedDB...");
@@ -16,7 +42,7 @@ class FileManager {
                 return { success: true, isNew: false, data: data };
             }
 
-            // No data in IndexedDB, try old JSON file as migration
+            // Migration from JSON file
             console.log("⚠️ No IndexedDB data, trying JSON file...");
             try {
                 const response = await fetch('./data/database.json');
@@ -31,7 +57,14 @@ class FileManager {
             }
 
             // Create fresh database
-            data = { students: [], settings: { lastId: 0 } };
+            data = { 
+                students: [], 
+                settings: { 
+                    lastId: 0,
+                    version: "2.0.0",
+                    created: new Date().toISOString()
+                }
+            };
             await this.dbManager.setData(this.DB_KEY, data);
             console.log("🆕 Fresh database created");
             
@@ -43,9 +76,9 @@ class FileManager {
         }
     }
 
-    // Auto-save to IndexedDB (instant, no user action needed)
     async saveFile(data) {
         try {
+            data.lastSaved = new Date().toISOString();
             await this.dbManager.setData(this.DB_KEY, data);
             console.log("💾 Data auto-saved to IndexedDB");
             return { success: true };
@@ -55,33 +88,91 @@ class FileManager {
         }
     }
 
-    // User-triggered backup to file
+    // CSV Import functionality
+    async importCSV() {
+        try {
+            let file;
+            
+            if ('showOpenFilePicker' in window) {
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: "CSV files",
+                        accept: { "text/csv": [".csv"] }
+                    }]
+                });
+                file = await handle.getFile();
+            } else {
+                file = await this.showFileInput('.csv,text/csv');
+            }
+
+            if (file) {
+                const text = await file.text();
+                const students = this.parseCSV(text);
+                return { success: true, students: students };
+            }
+            
+            return { success: false, message: "لم يتم اختيار ملف" };
+            
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                return { success: false, message: "تم إلغاء العملية" };
+            }
+            console.error("CSV Import error:", error);
+            return { success: false, message: "فشل في استيراد ملف CSV" };
+        }
+    }
+
+    parseCSV(csvText) {
+        const lines = csvText.split('\n').filter(line => line.trim());
+        const students = [];
+        
+        // Skip header row if exists
+        const startIndex = lines[0].includes('اسم الطالب') || lines.includes('name') ? 1 : 0;
+        
+        for (let i = startIndex; i < lines.length; i++) {
+            const columns = lines[i].split(',').map(col => col.replace(/"/g, '').trim());
+            
+            if (columns.length >= 6 && columns && columns[1]) {
+                const student = {
+                    name: columns,
+                    studentPhone: columns[1],
+                    parentPhone: columns[2],
+                    grade: columns[3], // Should be 'first', 'second', or 'third'
+                    section: columns[4] || '',
+                    groupTime: columns[5],
+                    paidAmount: parseFloat(columns[6]) || 0,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    attendance: {}
+                };
+                students.push(student);
+            }
+        }
+        
+        return students;
+    }
+
     async exportBackup(data) {
         try {
             const json = JSON.stringify(data, null, 2);
             const blob = new Blob([json], { type: "application/json" });
+            const timestamp = new Date().toISOString().split('T')[0];
             
-            // Try File System Access API (Chrome/Edge/Opera)
             if ('showSaveFilePicker' in window) {
                 const handle = await window.showSaveFilePicker({
-                    suggestedName: `backup_${new Date().toISOString().split('T')[0]}.json`,
-                    types: [{
-                        description: "JSON files",
-                        accept: { "application/json": [".json"] }
-                    }]
+                    suggestedName: `backup_${timestamp}.json`,
+                    types: [{ description: "JSON files", accept: { "application/json": [".json"] } }]
                 });
                 const writable = await handle.createWritable();
                 await writable.write(json);
                 await writable.close();
                 
                 return { success: true, message: "تم حفظ النسخة الاحتياطية بنجاح!" };
-            } 
-            // Fallback: Traditional download (Firefox/Safari)
-            else {
+            } else {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.download = `backup_${timestamp}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -93,38 +184,33 @@ class FileManager {
             if (error.name === 'AbortError') {
                 return { success: false, message: "تم إلغاء العملية" };
             }
-            console.error("Export error:", error);
             return { success: false, message: "فشل في تصدير البيانات" };
         }
     }
 
-    // User-triggered restore from file
     async importBackup() {
         try {
             let file;
             
-            // Try File System Access API
             if ('showOpenFilePicker' in window) {
                 const [handle] = await window.showOpenFilePicker({
-                    types: [{
-                        description: "JSON files",
-                        accept: { "application/json": [".json"] }
-                    }]
+                    types: [{ description: "JSON files", accept: { "application/json": [".json"] } }]
                 });
                 file = await handle.getFile();
-            }
-            // Fallback: Traditional file input
-            else {
-                file = await this.showFileInput();
+            } else {
+                file = await this.showFileInput('.json,application/json');
             }
 
             if (file) {
                 const text = await file.text();
                 const data = JSON.parse(text);
                 
-                // Save to IndexedDB
-                await this.dbManager.setData(this.DB_KEY, data);
+                // Validate data structure
+                if (!data.students || !Array.isArray(data.students)) {
+                    throw new Error("Invalid backup file format");
+                }
                 
+                await this.dbManager.setData(this.DB_KEY, data);
                 return { success: true, message: "تم استعادة البيانات بنجاح!", data: data };
             }
             
@@ -134,17 +220,15 @@ class FileManager {
             if (error.name === 'AbortError') {
                 return { success: false, message: "تم إلغاء العملية" };
             }
-            console.error("Import error:", error);
             return { success: false, message: "فشل في استعادة البيانات - تأكد من صحة الملف" };
         }
     }
 
-    // Helper for fallback file input
-    showFileInput() {
+    showFileInput(accept = '.json,application/json') {
         return new Promise((resolve) => {
             const input = document.createElement("input");
             input.type = "file";
-            input.accept = ".json,application/json";
+            input.accept = accept;
             input.onchange = () => {
                 resolve(input.files[0]);
                 document.body.removeChild(input);

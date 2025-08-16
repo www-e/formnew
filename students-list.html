@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قائمة الطلاب</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 font-arabic">
+    <header class="bg-white shadow-md sticky top-0 z-40">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-list text-blue-600 ml-2"></i>قائمة الطلاب</h1>
+            <div id="db-status" class="text-gray-500 flex items-center"><i class="fas fa-spinner fa-spin ml-2"></i>جاري تحميل البيانات...</div>
+            <div class="flex gap-2">
+                <a href="students.html" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                    <i class="fas fa-plus ml-1"></i>إضافة طالب
+                </a>
+                <a href="index.html" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-home ml-1"></i>الرئيسية
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="container mx-auto px-4 py-8 opacity-25 pointer-events-none transition-opacity duration-500">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6 text-center stat-card">
+                <div class="text-3xl font-bold text-blue-600" id="totalStudents">0</div>
+                <div class="text-gray-600">إجمالي الطلاب</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center stat-card">
+                <div class="text-3xl font-bold text-green-600" id="totalRevenue">0</div>
+                <div class="text-gray-600">إجمالي الإيرادات</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center stat-card">
+                <div class="text-3xl font-bold text-purple-600" id="firstGradeCount">0</div>
+                <div class="text-gray-600">الصف الأول</div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6 text-center stat-card">
+                <div class="text-3xl font-bold text-orange-600" id="thirdGradeCount">0</div>
+                <div class="text-gray-600">الصف الثالث</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">البحث بالاسم أو الرقم</label>
+                    <input type="text" id="searchInput" placeholder="ابحث..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">فلترة بالصف</label>
+                    <select id="filterGrade" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="">جميع الصفوف</option>
+                        <option value="first">الأول الثانوي</option>
+                        <option value="second">الثاني الثانوي</option>
+                        <option value="third">الثالث الثانوي</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ترتيب حسب</label>
+                    <select id="sortBy" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="newest">الأحدث أولاً</option>
+                        <option value="oldest">الأقدم أولاً</option>
+                        <option value="name">الاسم أ-ي</option>
+                        <option value="amount_high">المبلغ الأعلى</option>
+                        <option value="amount_low">المبلغ الأقل</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="clearFiltersBtn" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                        <i class="fas fa-eraser ml-1"></i>مسح الفلاتر
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800"><i class="fas fa-table text-blue-600 ml-2"></i>قائمة الطلاب المسجلين</h2>
+                <div class="flex gap-2">
+                    <button id="exportExcelBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-file-excel ml-1"></i>تصدير Excel
+                    </button>
+                    <button id="backupBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-download ml-1"></i>نسخ احتياطي
+                    </button>
+                    <button id="restoreBtn" class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+                        <i class="fas fa-upload ml-1"></i>استعادة البيانات
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="border border-gray-300 px-4 py-3 text-right">كود الطالب</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">اسم الطالب</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">رقم الطالب</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">رقم ولي الأمر</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">الصف</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">القسم</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">المجموعة</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">المبلغ المدفوع</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">تاريخ التسجيل</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/fileManager.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/formHandler.js"></script>
+    <script src="js/tableManager.js"></script>
+    <script src="js/exportManager.js"></script>
+    <script src="js/students-list-app.js"></script>
+</body>
+</html>

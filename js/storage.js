@@ -32,7 +32,7 @@ class StorageManager {
     async persistData() {
         // This now just does auto-save instead of downloading
         await this.autoSave();
-        
+
         // Show success message
         if (window.app) {
             window.app.showSuccessMessage("تم حفظ البيانات تلقائياً!");
@@ -66,14 +66,14 @@ class StorageManager {
         if (duplicateStudent) {
             return { success: false, message: 'رقم هاتف الطالب مسجل من قبل' };
         }
-        
+
         studentData.createdAt = new Date().toISOString();
         studentData.updatedAt = studentData.createdAt;
         studentData.attendance = {};
 
         this.data.students.push(studentData);
         await this.autoSave(); // Auto-save instead of manual
-        
+
         return { success: true, message: 'تم إضافة الطالب بنجاح!' };
     }
 
@@ -85,7 +85,7 @@ class StorageManager {
 
         updatedData.updatedAt = new Date().toISOString();
         this.data.students[studentIndex] = { ...this.data.students[studentIndex], ...updatedData };
-        
+
         await this.autoSave(); // Auto-save instead of manual
         return { success: true, message: 'تم تحديث الطالب بنجاح!' };
     }
@@ -105,21 +105,26 @@ class StorageManager {
     generateId(grade) {
         let uniqueId = '';
         let isUnique = false;
-        const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-        
+
+        // Grade mapping: first=1, second=2, third=3
+        const gradeMap = { 'first': '1', 'second': '2', 'third': '3' };
+        const gradeNumber = gradeMap[grade] || '1';
+
         while (!isUnique) {
-            let randomPart = '';
-            for (let i = 0; i < 3; i++) {
-                randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            uniqueId = `std-g${grade.charAt(0)}-${randomPart}`;
-            
+            // Generate 3-digit random number (001-999)
+            const randomNum = Math.floor(Math.random() * 999) + 1;
+            const paddedNum = randomNum.toString().padStart(3, '0');
+
+            uniqueId = `std-${gradeNumber}${paddedNum}`;
+
+            // Check for uniqueness
             if (!this.data.students.find(s => s.id === uniqueId)) {
                 isUnique = true;
             }
         }
         return uniqueId;
     }
+
 
     getAllStudents() {
         return this.data.students || [];
@@ -139,4 +144,88 @@ class StorageManager {
         });
         return stats;
     }
+    // Add this method to StorageManager class
+    async importStudentsFromCSV() {
+        if (this.fileManager) {
+            const result = await this.fileManager.importCSV();
+            if (result.success && result.students) {
+                let imported = 0;
+                let skipped = 0;
+
+                for (const studentData of result.students) {
+                    // Generate ID and check for duplicates
+                    studentData.id = this.generateId(studentData.grade);
+
+                    // Check for duplicate phone numbers
+                    const duplicate = this.data.students.find(s =>
+                        s.studentPhone === studentData.studentPhone
+                    );
+
+                    if (!duplicate) {
+                        // Add missing fields based on grade
+                        studentData.gradeName = this.getGradeName(studentData.grade);
+                        studentData.sectionName = this.getSectionName(studentData.grade, studentData.section);
+                        studentData.groupTimeText = this.getGroupTimeText(studentData.groupTime);
+
+                        this.data.students.push(studentData);
+                        imported++;
+                    } else {
+                        skipped++;
+                    }
+                }
+
+                await this.autoSave();
+                return {
+                    success: true,
+                    message: `تم استيراد ${imported} طالب، تم تجاهل ${skipped} طالب مكرر`,
+                    imported: imported,
+                    skipped: skipped
+                };
+            }
+            return result;
+        }
+        return { success: false, message: "File manager not available" };
+    }
+
+    getGradeName(grade) {
+        const gradeNames = {
+            'first': 'الصف الأول الثانوي',
+            'second': 'الصف الثاني الثانوي',
+            'third': 'الصف الثالث الثانوي'
+        };
+        return gradeNames[grade] || grade;
+    }
+
+    getSectionName(grade, section) {
+        if (!section) return '';
+        const sections = {
+            'second': {
+                'science_pure': 'علمي - رياضة بحتة',
+                'science_applied': 'علمي - رياضة تطبيقية',
+                'arts': 'أدبي'
+            },
+            'third': {
+                'general_science': 'علمي رياضة',
+                'statistics_arts': 'إحصاء - أدبي'
+            }
+        };
+        return sections[grade]?.[section] || section;
+    }
+
+    getGroupTimeText(groupTime) {
+        const groups = {
+            'sat_tue_315': 'السبت والثلاثاء - 3:15 م',
+            'sat_tue_430': 'السبت والثلاثاء - 4:30 م',
+            'sun_wed_200': 'الأحد والأربعاء - 2:00 م',
+            'mon_thu_200': 'الاثنين والخميس - 2:00 م',
+            'sat_tue_200': 'السبت والثلاثاء - 2:00 م',
+            'sun_wed_315': 'الأحد والأربعاء - 3:15 م',
+            'mon_thu_315': 'الاثنين والخميس - 3:15 م',
+            'sat_tue_thu_1200': 'السبت والثلاثاء والخميس - 12:00 م',
+            'sun_wed_430': 'الأحد والأربعاء - 4:30 م'
+        };
+        return groups[groupTime] || groupTime;
+    }
+
+
 }
