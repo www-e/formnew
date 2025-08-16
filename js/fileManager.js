@@ -126,24 +126,29 @@ class FileManager {
         const lines = csvText.split('\n').filter(line => line.trim());
         const students = [];
         
-        // Skip header row if exists
-        const startIndex = lines[0].includes('اسم الطالب') || lines.includes('name') ? 1 : 0;
+        // Skip header row if it exists
+        const startIndex = lines[0].includes('اسم الطالب') || lines[0].toLowerCase().includes('name') ? 1 : 0;
         
+        // Auto-detect separator (comma or tab)
+        const separator = lines[startIndex].includes('\t') ? '\t' : ',';
+
         for (let i = startIndex; i < lines.length; i++) {
-            const columns = lines[i].split(',').map(col => col.replace(/"/g, '').trim());
+            const columns = lines[i].split(separator).map(col => col.replace(/"/g, '').trim());
             
-            if (columns.length >= 6 && columns && columns[1]) {
+            // Ensure the row has enough columns and a name
+            if (columns.length >= 6 && columns[0]) {
                 const student = {
-                    name: columns,
+                    name: columns[0],
                     studentPhone: columns[1],
                     parentPhone: columns[2],
-                    grade: columns[3], // Should be 'first', 'second', or 'third'
-                    section: columns[4] || '',
-                    groupTime: columns[5],
-                    paidAmount: parseFloat(columns[6]) || 0,
+                    grade: columns[3], // Raw text like "الصف الأول الثانوي"
+                    section: columns[4] || '', // Raw text
+                    groupTime: columns[5], // Raw text
+                    paidAmount: parseFloat(columns[6].replace('جنيه', '')) || 0,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
-                    attendance: {}
+                    attendance: {},
+                    payments: {} // Initialize payments object
                 };
                 students.push(student);
             }
@@ -151,7 +156,6 @@ class FileManager {
         
         return students;
     }
-
     async exportBackup(data) {
         try {
             const json = JSON.stringify(data, null, 2);

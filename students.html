@@ -12,16 +12,20 @@
 
 <body class="bg-gray-50 font-arabic">
 
-    <!-- Header -->
     <header class="bg-white shadow-md sticky top-0 z-40">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-users text-blue-600 ml-2"></i>نظام إدارة
-                الطلاب</h1>
-            <div id="db-status" class="text-gray-500 flex items-center"><i class="fas fa-spinner fa-spin ml-2"></i>جاري
-                تحميل البيانات...</div>
-            <a href="index.html"
-                class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"><i
-                    class="fas fa-home ml-1"></i>العودة للرئيسية</a>
+            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-user-graduate text-purple-600 ml-2"></i>الأستاذ</h1>
+            <nav class="hidden md:flex gap-6 items-center">
+                <a href="students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
+                <a href="attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
+                <a href="payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
+            </nav>
+            <div class="flex items-center gap-4">
+                <div id="db-status" class="text-gray-500 flex items-center"><i class="fas fa-spinner fa-spin ml-2"></i>جاري التحميل...</div>
+                <a href="index.html"
+                    class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"><i
+                        class="fas fa-home ml-1"></i></a>
+            </div>
         </div>
     </header>
 
@@ -187,6 +191,7 @@
                 <table class="w-full border-collapse">
                     <thead>
                         <tr class="bg-gray-100">
+                            <th class="border border-gray-300 px-4 py-3 text-right">#</th>
                             <th class="border border-gray-300 px-4 py-3 text-right">كود الطالب</th>
                             <th class="border border-gray-300 px-4 py-3 text-right">اسم الطالب</th>
                             <th class="border border-gray-300 px-4 py-3 text-right">رقم الطالب</th>

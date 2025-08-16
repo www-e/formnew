@@ -25,6 +25,16 @@ class StudentRegistrationApp {
         console.log(`✅ Student Page v${this.version} initialized.`);
         await this.loadInitialData();
         this.setupEventListeners();
+
+        // --- NEW LOGIC: Check for edit parameter in URL ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const studentIdToEdit = urlParams.get('edit');
+        if (studentIdToEdit) {
+            // Use a small timeout to ensure the form handler and data are fully ready
+            setTimeout(() => {
+                this.formHandler.editStudentById(studentIdToEdit);
+            }, 100);
+        }
     }
 
     async loadInitialData() {

@@ -77,7 +77,7 @@ class StorageManager {
         return { success: true, message: 'تم إضافة الطالب بنجاح!' };
     }
 
-async updateStudent(studentId, updatedData) {
+async updateStudent(studentId, updatedData, mergeNested = false) {
     const studentIndex = this.data.students.findIndex(s => s.id === studentId);
     if (studentIndex === -1) {
         return { success: false, message: 'الطالب غير موجود' };
@@ -85,18 +85,24 @@ async updateStudent(studentId, updatedData) {
 
     const existingStudent = this.data.students[studentIndex];
 
-    // 🔥 CRITICAL FIX: Always merge attendance data, never overwrite
-    if (updatedData.attendance) {
-        // If new attendance data is provided, merge it with existing
-        updatedData.attendance = {
-            ...existingStudent.attendance,
-            ...updatedData.attendance
-        };
+    // Deep merge for attendance and payments if mergeNested is true
+    if (mergeNested) {
+        if (updatedData.attendance) {
+            updatedData.attendance = { ...existingStudent.attendance, ...updatedData.attendance };
+        }
+        if (updatedData.payments) {
+            updatedData.payments = { ...existingStudent.payments, ...updatedData.payments };
+        }
     } else {
-        // If no attendance data provided, preserve existing completely
-        updatedData.attendance = existingStudent.attendance || {};
+       // Preserve existing attendance and payments if not explicitly provided in update
+        if (!updatedData.attendance) {
+            updatedData.attendance = existingStudent.attendance || {};
+        }
+        if (!updatedData.payments) {
+            updatedData.payments = existingStudent.payments || {};
+        }
     }
-
+    
     updatedData.updatedAt = new Date().toISOString();
     
     this.data.students[studentIndex] = {
@@ -104,14 +110,11 @@ async updateStudent(studentId, updatedData) {
         ...updatedData
     };
 
-    console.log(`📋 Student ${studentId} updated with attendance:`, this.data.students[studentIndex].attendance);
+    console.log(`📋 Student ${studentId} updated.`);
 
     await this.autoSave();
     return { success: true, message: 'تم تحديث الطالب بنجاح!' };
 }
-
-
-
     async deleteStudent(studentId) {
         const initialLength = this.data.students.length;
         this.data.students = this.data.students.filter(s => s.id !== studentId);
@@ -166,47 +169,81 @@ async updateStudent(studentId, updatedData) {
         });
         return stats;
     }
-    // Add this method to StorageManager class
     async importStudentsFromCSV() {
-        if (this.fileManager) {
-            const result = await this.fileManager.importCSV();
-            if (result.success && result.students) {
-                let imported = 0;
-                let skipped = 0;
+        if (!this.fileManager) {
+            return { success: false, message: "File manager not available" };
+        }
 
-                for (const studentData of result.students) {
-                    // Generate ID and check for duplicates
-                    studentData.id = this.generateId(studentData.grade);
-
-                    // Check for duplicate phone numbers
-                    const duplicate = this.data.students.find(s =>
-                        s.studentPhone === studentData.studentPhone
-                    );
-
-                    if (!duplicate) {
-                        // Add missing fields based on grade
-                        studentData.gradeName = this.getGradeName(studentData.grade);
-                        studentData.sectionName = this.getSectionName(studentData.grade, studentData.section);
-                        studentData.groupTimeText = this.getGroupTimeText(studentData.groupTime);
-
-                        this.data.students.push(studentData);
-                        imported++;
-                    } else {
-                        skipped++;
-                    }
-                }
-
-                await this.autoSave();
-                return {
-                    success: true,
-                    message: `تم استيراد ${imported} طالب، تم تجاهل ${skipped} طالب مكرر`,
-                    imported: imported,
-                    skipped: skipped
-                };
-            }
+        const result = await this.fileManager.importCSV();
+        if (!result.success || !result.students) {
             return result;
         }
-        return { success: false, message: "File manager not available" };
+
+        // --- Translation Maps ---
+        const gradeMap = {
+            'الصف الأول الثانوي': 'first',
+            'الصف الثاني الثانوي': 'second',
+            'الصف الثالث الثانوي': 'third',
+        };
+        const sectionMap = {
+            'علمي - رياضة بحتة': 'science_pure',
+            'علمي - رياضة تطبيقية': 'science_applied',
+            'أدبي': 'arts',
+            'علمي رياضة': 'general_science',
+            'إحصاء - أدبي': 'statistics_arts',
+            '-': '' // Handle dashes for empty sections
+        };
+        const groupTimeMap = {
+            'السبت والثلاثاء - 3:15 م': 'sat_tue_315',
+            'السبت والثلاثاء - 4:30 م': 'sat_tue_430',
+            'الأحد والأربعاء - 2:00 م': 'sun_wed_200',
+            'الاثنين والخميس - 2:00 م': 'mon_thu_200',
+            'السبت والثلاثاء - 2:00 م': 'sat_tue_200',
+            'الأحد والأربعاء - 3:15 م': 'sun_wed_315',
+            'الاثنين والخميس - 3:15 م': 'mon_thu_315',
+            'السبت والثلاثاء والخميس - 12:00 م': 'sat_tue_thu_1200',
+            'الأحد والأربعاء - 4:30 م': 'sun_wed_430'
+        };
+
+        let imported = 0;
+        let skipped = 0;
+
+        for (const studentData of result.students) {
+            // Translate raw CSV data to system keys
+            const gradeKey = gradeMap[studentData.grade] || studentData.grade;
+            const sectionKey = sectionMap[studentData.section] || studentData.section;
+            const groupTimeKey = groupTimeMap[studentData.groupTime] || studentData.groupTime;
+
+            // Prepend leading zero to phone numbers if missing
+            let studentPhone = studentData.studentPhone.startsWith('0') ? studentData.studentPhone : '0' + studentData.studentPhone;
+            
+            // Check for duplicate phone numbers
+            const isDuplicate = this.data.students.some(s => s.studentPhone === studentPhone);
+
+            if (!isDuplicate) {
+                studentData.id = this.generateId(gradeKey);
+                studentData.grade = gradeKey;
+                studentData.section = sectionKey;
+                studentData.groupTime = groupTimeKey;
+                studentData.studentPhone = studentPhone;
+                
+                // Add the display names
+                studentData.gradeName = this.getGradeName(gradeKey);
+                studentData.sectionName = this.getSectionName(gradeKey, sectionKey);
+                studentData.groupTimeText = this.getGroupTimeText(groupTimeKey);
+
+                this.data.students.push(studentData);
+                imported++;
+            } else {
+                skipped++;
+            }
+        }
+
+        await this.autoSave();
+        return {
+            success: true,
+            message: `اكتمل الاستيراد! تم إضافة ${imported} طالب جديد. تم تجاهل ${skipped} طالب بسبب تكرار رقم الهاتف.`,
+        };
     }
 
     getGradeName(grade) {
@@ -248,6 +285,23 @@ async updateStudent(studentId, updatedData) {
         };
         return groups[groupTime] || groupTime;
     }
-
+    getRequiredPayment(grade, section = '') {
+        switch (grade) {
+            case 'first':
+                return 200;
+            case 'second':
+                if (section.startsWith('science')) { // Catches 'science_pure' and 'science_applied'
+                    return 350;
+                }
+                return 300;
+            case 'third':
+                if (section === 'general_science') {
+                    return 450;
+                }
+                return 400;
+            default:
+                return 0; // Default case
+        }
+    }
 
 }

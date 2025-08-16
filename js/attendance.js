@@ -1,6 +1,6 @@
 class AttendancePage {
     constructor() {
-        this.version = '1.2.1-cleanup';
+        this.version = '1.3.0-hotfix'; // Updated version to reflect the fix
         // UI Elements
         this.mainContent = document.getElementById('main-content');
         this.dbStatusEl = document.getElementById('db-status');
@@ -21,8 +21,9 @@ class AttendancePage {
         this.groupSchedules = this.getGroupSchedules();
 
         // Managers & Components
-        this.fileManager = new FileManager();
-        this.storageManager = new StorageManager();
+        // --- FIX: Use the globally available context ---
+        this.fileManager = window.appContext.fileManager;
+        this.storageManager = window.appContext.storageManager;
         this.quickAttendanceModal = null; // This will be initialized after data load
 
         this.initialize();
@@ -223,7 +224,12 @@ class AttendancePage {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new AttendancePage();
+    // --- FIX: Add check for appContext before initializing ---
+    if (window.appContext) {
+        new AttendancePage();
+    } else {
+        console.error("AppContext is not ready!");
+    }
 
     setTimeout(() => { // Wait for page to fully load
         document.getElementById('backupBtn')?.addEventListener('click', async () => {

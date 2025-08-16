@@ -8,7 +8,7 @@ class TableManager {
             grade: '',
             sort: 'newest'
         };
-        
+
         this.initializeEventListeners();
     }
 
@@ -45,7 +45,7 @@ class TableManager {
         // Apply search filter
         if (this.currentFilters.search) {
             const searchTerm = this.currentFilters.search.toLowerCase();
-            filtered = filtered.filter(student => 
+            filtered = filtered.filter(student =>
                 student.name.toLowerCase().includes(searchTerm) ||
                 student.studentPhone.includes(searchTerm) ||
                 student.parentPhone.includes(searchTerm)
@@ -79,18 +79,18 @@ class TableManager {
         this.filteredStudents = filtered;
         this.renderTable();
     }
-    
+
     clearFilters() {
         document.getElementById('searchInput').value = '';
         document.getElementById('filterGrade').value = '';
         document.getElementById('sortBy').value = 'newest';
-        
+
         this.currentFilters = {
             search: '',
             grade: '',
             sort: 'newest'
         };
-        
+
         this.applyFilters();
     }
 
@@ -100,7 +100,7 @@ class TableManager {
         if (this.filteredStudents.length === 0) {
             this.tableBody.innerHTML = `
                 <tr>
-                    <td colspan="9" class="text-center py-8 text-gray-500">
+                    <td colspan="11" class="text-center py-8 text-gray-500">
                         <i class="fas fa-search text-4xl mb-2"></i>
                         <p>لا يوجد طلاب يطابقون البحث الحالي.</p>
                         <p class="text-sm">جرب تغيير الفلاتر أو إضافة طلاب جدد.</p>
@@ -110,12 +110,14 @@ class TableManager {
             return;
         }
 
-        this.filteredStudents.forEach((student) => {
+        this.filteredStudents.forEach((student, index) => {
             const row = document.createElement('tr');
             row.className = 'table-row border-b border-gray-200';
-            
+
+            // CRITICAL FIX: The student.id must be wrapped in quotes for the onclick handler
             row.innerHTML = `
-            <td class="border border-gray-300 px-4 py-3"><div class="font-mono font-bold text-gray-700">${student.id}</div></td>
+                <td class="border border-gray-300 px-4 py-3 text-center font-bold">${index + 1}</td>
+                <td class="border border-gray-300 px-4 py-3"><div class="font-mono font-bold text-gray-700">${student.id}</div></td>
                 <td class="border border-gray-300 px-4 py-3"><div class="font-semibold">${student.name}</div></td>
                 <td class="border border-gray-300 px-4 py-3"><div class="font-mono">${student.studentPhone}</div></td>
                 <td class="border border-gray-300 px-4 py-3"><div class="font-mono">${student.parentPhone}</div></td>
@@ -129,8 +131,7 @@ class TableManager {
                 </td>
                 <td class="border border-gray-300 px-4 py-3">
                     <div class="flex gap-2">
-                        <button onclick="window.formHandler.editStudentById(${student.id})" class="btn-edit bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 transition-colors"><i class="fas fa-edit"></i></button>
-                        <button onclick="tableManager.deleteStudent(${student.id})" class="btn-delete bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition-colors"><i class="fas fa-trash"></i></button>
+<a href="students.html?edit=${student.id}" class="btn-edit bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 transition-colors"><i class="fas fa-edit"></i></a>                        <button onclick="tableManager.deleteStudent('${student.id}')" class="btn-delete bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition-colors"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             `;
@@ -140,8 +141,7 @@ class TableManager {
     }
 
     async deleteStudent(studentId) {
-        const student = this.students.find(s => s.id === studentId);
-        if (!student) {
+        const student = window.storageManager.getAllStudents().find(s => s.id === studentId); if (!student) {
             window.app.showErrorMessage('الطالب غير موجود');
             return;
         }

@@ -64,6 +64,7 @@ async handleSubmit(event) {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     const todayString = `${year}-${month}-${day}`;
+    const monthKey = `${year}-${month}`; // Key for payment check
 
     console.log(`📅 Marking attendance for ${student.name} on ${todayString}`);
 
@@ -79,37 +80,46 @@ async handleSubmit(event) {
         return;
     }
 
-    if (student.attendance && student.attendance[todayString] === 'present') {
-        this.showMessage(`تم تسجيل حضور هذا الطالب بالفعل اليوم.`, false);
-        return;
-    }
+    // --- NEW: Payment Status Check ---
+    const requiredAmount = this.storageManager.getRequiredPayment(student.grade, student.section);
+    const hasPaid = student.payments && student.payments[monthKey] && student.payments[monthKey].amountPaid >= requiredAmount;
 
-    // 🔥 KEY FIX: Use updateStudent() instead of direct manipulation
+    // --- MODIFICATION: The rest of the function is wrapped in a try/catch ---
     try {
-        this.showMessage('جاري الحفظ...', false);
-        
-        // Prepare the attendance update
-        const attendanceUpdate = {
-            attendance: {
-                [todayString]: 'present'
-            }
-        };
-
-        // Update through the proper channel
-        const result = await this.storageManager.updateStudent(studentId, attendanceUpdate);
-        
-        if (result.success) {
-            console.log(`✅ Attendance saved successfully for ${student.name}`);
-            this.showMessage(`تم تسجيل حضور الطالب: ${student.name}`);
-            this.studentIdInput.value = '';
-            
-            if (this.onAttendanceMarked) {
-                this.onAttendanceMarked();
-            }
+        if (student.attendance && student.attendance[todayString] === 'present') {
+            this.showMessage(`تم تسجيل حضور هذا الطالب بالفعل اليوم.`, false);
         } else {
-            throw new Error(result.message);
+            // Mark attendance
+            this.showMessage('جاري الحفظ...', false);
+            const attendanceUpdate = {
+                attendance: { [todayString]: 'present' }
+            };
+            const result = await this.storageManager.updateStudent(studentId, attendanceUpdate, true); // Use merge update
+            
+            if (result.success) {
+                console.log(`✅ Attendance saved successfully for ${student.name}`);
+                this.showMessage(`تم تسجيل حضور الطالب: ${student.name}`);
+                if (this.onAttendanceMarked) {
+                    this.onAttendanceMarked(); // Refresh the main attendance table
+                }
+            } else {
+                throw new Error(result.message);
+            }
+        }
+
+        // --- NEW: Display payment warning AFTER attendance is marked ---
+        if (!hasPaid) {
+            // Append a warning message without clearing the success message
+            const existingMessage = this.messageEl.textContent;
+            this.messageEl.innerHTML = `
+                ${existingMessage}
+                <br>
+                <span class="text-yellow-600 font-bold">⚠️ تنبيه: لم يتم دفع مصاريف هذا الشهر.</span>
+            `;
         }
         
+        this.studentIdInput.value = ''; // Clear input for next scan
+
     } catch (error) {
         console.error('❌ Failed to save attendance:', error);
         this.showMessage('فشل في حفظ الحضور. حاول مرة أخرى.', true);
