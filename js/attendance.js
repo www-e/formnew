@@ -181,4 +181,22 @@ class AttendancePage {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => { new AttendancePage(); });
+document.addEventListener('DOMContentLoaded', () => { new AttendancePage();
+
+    setTimeout(() => { // Wait for page to fully load
+        document.getElementById('backupBtn')?.addEventListener('click', async () => {
+            const result = await window.attendancePage.storageManager.createBackup();
+            alert(result.message);
+        });
+
+        document.getElementById('restoreBtn')?.addEventListener('click', async () => {
+            if (confirm('هل أنت متأكد؟ سيتم استبدال جميع البيانات الحالية.')) {
+                const result = await window.attendancePage.storageManager.restoreBackup();
+                alert(result.message);
+            }
+        });
+    }, 1000);
+
+
+
+ });

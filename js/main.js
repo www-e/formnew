@@ -1,20 +1,20 @@
-// =================================================================
-// Main Application Context
-// =================================================================
-// This script initializes core services and makes them available
-// globally under the `window.appContext` object.
-// It should be loaded before page-specific scripts like app.js or attendance.js.
-
+// js/main.js - Enhanced Application Context
 (function() {
-    console.log("🚀 Initializing application context...");
+    console.log("🚀 Initializing enhanced application context...");
+
+    // Create managers
+    const fileManager = new FileManager();
+    const storageManager = new StorageManager();
+    
+    // Connect them
+    storageManager.setFileManager(fileManager);
 
     const appContext = {
-        fileManager: new FileManager(),
-        storageManager: new StorageManager(),
-        // We can add more shared services here in the future
+        fileManager: fileManager,
+        storageManager: storageManager,
     };
 
     window.appContext = appContext;
     
-    console.log("✅ Application context ready.");
+    console.log("✅ Enhanced application context ready with IndexedDB!");
 })();

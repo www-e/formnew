@@ -1,9 +1,15 @@
+// js/storage.js - Update the StorageManager class
 class StorageManager {
     constructor() {
         this.data = {
             students: [],
             settings: { lastId: 0 }
         };
+        this.fileManager = null; // Will be injected
+    }
+
+    setFileManager(fileManager) {
+        this.fileManager = fileManager;
     }
 
     loadData(data) {
@@ -12,31 +18,88 @@ class StorageManager {
         if (!this.data.settings) this.data.settings = { lastId: 0 };
     }
 
-    downloadFile(blob, filename) {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+    // AUTO-SAVE: Called after every change
+    async autoSave() {
+        if (this.fileManager) {
+            const result = await this.fileManager.saveFile(this.data);
+            if (!result.success) {
+                console.error("Auto-save failed:", result.error);
+            }
+        }
     }
 
+    // Replace the old persistData method
     async persistData() {
-        try {
-            const jsonContent = JSON.stringify(this.data, null, 2); // Pretty-print JSON
-            const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
-            this.downloadFile(blob, 'database.json');
-            
-            // Give the user a clear instruction.
-            alert("تم تجهيز ملف البيانات المحدث. يرجى حفظه في مجلد 'data' واستبدال الملف القديم لضمان حفظ التغييرات.");
-
-        } catch (error) {
-            console.error("Error persisting data:", error);
-            window.app.showErrorMessage("فشل حفظ البيانات.");
+        // This now just does auto-save instead of downloading
+        await this.autoSave();
+        
+        // Show success message
+        if (window.app) {
+            window.app.showSuccessMessage("تم حفظ البيانات تلقائياً!");
         }
+    }
+
+    // User backup function
+    async createBackup() {
+        if (this.fileManager) {
+            return await this.fileManager.exportBackup(this.data);
+        }
+        return { success: false, message: "File manager not available" };
+    }
+
+    // User restore function  
+    async restoreBackup() {
+        if (this.fileManager) {
+            const result = await this.fileManager.importBackup();
+            if (result.success && result.data) {
+                this.loadData(result.data);
+                // Refresh the page to update UI
+                window.location.reload();
+            }
+            return result;
+        }
+        return { success: false, message: "File manager not available" };
+    }
+
+    async saveStudent(studentData) {
+        const duplicateStudent = this.data.students.find(s => s.studentPhone === studentData.studentPhone);
+        if (duplicateStudent) {
+            return { success: false, message: 'رقم هاتف الطالب مسجل من قبل' };
+        }
+        
+        studentData.createdAt = new Date().toISOString();
+        studentData.updatedAt = studentData.createdAt;
+        studentData.attendance = {};
+
+        this.data.students.push(studentData);
+        await this.autoSave(); // Auto-save instead of manual
+        
+        return { success: true, message: 'تم إضافة الطالب بنجاح!' };
+    }
+
+    async updateStudent(studentId, updatedData) {
+        const studentIndex = this.data.students.findIndex(s => s.id === studentId);
+        if (studentIndex === -1) {
+            return { success: false, message: 'الطالب غير موجود' };
+        }
+
+        updatedData.updatedAt = new Date().toISOString();
+        this.data.students[studentIndex] = { ...this.data.students[studentIndex], ...updatedData };
+        
+        await this.autoSave(); // Auto-save instead of manual
+        return { success: true, message: 'تم تحديث الطالب بنجاح!' };
+    }
+
+    async deleteStudent(studentId) {
+        const initialLength = this.data.students.length;
+        this.data.students = this.data.students.filter(s => s.id !== studentId);
+
+        if (this.data.students.length === initialLength) {
+            return { success: false, message: 'الطالب غير موجود' };
+        }
+
+        await this.autoSave(); // Auto-save instead of manual
+        return { success: true, message: 'تم حذف الطالب بنجاح!' };
     }
 
     generateId(grade) {
@@ -49,9 +112,8 @@ class StorageManager {
             for (let i = 0; i < 3; i++) {
                 randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            uniqueId = `std-g${grade}-${randomPart}`;
+            uniqueId = `std-g${grade.charAt(0)}-${randomPart}`;
             
-            // Check for uniqueness
             if (!this.data.students.find(s => s.id === uniqueId)) {
                 isUnique = true;
             }
@@ -59,43 +121,8 @@ class StorageManager {
         return uniqueId;
     }
 
-    async saveStudent(studentData) {
-        const duplicateStudent = this.data.students.find(s => s.studentPhone === studentData.studentPhone);
-        if (duplicateStudent) {
-            return { success: false, message: 'رقم هاتف الطالب مسجل من قبل' };
-        }
-        studentData.attendance = {};
-
-        this.data.students.push(studentData);
-        await this.persistData(); // This will now trigger a download
-        return { success: true, message: 'تم إضافة الطالب بنجاح! جاري تجهيز ملف الحفظ...' };
-    }
-
     getAllStudents() {
         return this.data.students || [];
-    }
-
-    async updateStudent(studentId, updatedData) {
-        const studentIndex = this.data.students.findIndex(s => s.id === studentId);
-        if (studentIndex === -1) {
-            return { success: false, message: 'الطالب غير موجود' };
-        }
-
-        this.data.students[studentIndex] = { ...this.data.students[studentIndex], ...updatedData };
-        await this.persistData();
-        return { success: true, message: 'تم تحديث الطالب بنجاح! جاري تجهيز ملف الحفظ...' };
-    }
-
-    async deleteStudent(studentId) {
-        const initialLength = this.data.students.length;
-        this.data.students = this.data.students.filter(s => s.id !== studentId);
-
-        if (this.data.students.length === initialLength) {
-            return { success: false, message: 'الطالب غير موجود' };
-        }
-
-        await this.persistData();
-        return { success: true, message: 'تم حذف الطالب بنجاح! جاري تجهيز ملف الحفظ...' };
     }
 
     getStatistics() {
