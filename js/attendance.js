@@ -198,24 +198,28 @@ class AttendancePage {
 
 
 
-    render() {
-        this.updateMonthDisplay();
-        const selectedGrade = this.gradeFilter.value;
-        const selectedGroup = this.groupFilter.value;
+ render() {
+    this.updateMonthDisplay();
+    const selectedGrade = this.gradeFilter.value;
+    const selectedGroup = this.groupFilter.value;
 
-        if (selectedGrade === 'all' || selectedGroup === 'all') {
-            this.tableHeader.innerHTML = '';
-            this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>';
-            return;
-        }
-
-        const filteredStudents = this.allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup);
-        const groupSchedule = this.groupSchedules[selectedGroup];
-        const scheduledDates = this.getScheduledDatesForMonth(groupSchedule);
-
-        this.renderTableHeader(scheduledDates);
-        this.renderTableBody(filteredStudents, scheduledDates);
+    if (selectedGrade === 'all' || selectedGroup === 'all') {
+        this.tableHeader.innerHTML = '';
+        this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>';
+        return;
     }
+
+    // 🔥 CRITICAL FIX: Get fresh data from storage instead of using cached this.allStudents
+    const allStudents = this.storageManager.getAllStudents();
+    const filteredStudents = allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup);
+    
+    const groupSchedule = this.groupSchedules[selectedGroup];
+    const scheduledDates = this.getScheduledDatesForMonth(groupSchedule);
+
+    this.renderTableHeader(scheduledDates);
+    this.renderTableBody(filteredStudents, scheduledDates);
+}
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {

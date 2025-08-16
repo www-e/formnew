@@ -28,3 +28,24 @@ window.addEventListener('beforeunload', async () => {
         console.log('Emergency backup failed');
     }
 });
+// Add this at the end of js/main.js for debugging
+window.debugAttendance = async function() {
+    try {
+        const dbManager = new DatabaseManager();
+        const data = await dbManager.getData('center_data');
+        console.log('🔍 Current database data:', data);
+        
+        if (data && data.students) {
+            data.students.forEach(student => {
+                console.log(`👤 ${student.name} (${student.id}):`, student.attendance);
+            });
+        }
+        
+        const keys = await dbManager.getAllKeys();
+        console.log('🗝️ All database keys:', keys);
+        
+        return data;
+    } catch (error) {
+        console.error('❌ Debug failed:', error);
+    }
+};

@@ -77,28 +77,39 @@ class StorageManager {
         return { success: true, message: 'تم إضافة الطالب بنجاح!' };
     }
 
-    async updateStudent(studentId, updatedData) {
-        const studentIndex = this.data.students.findIndex(s => s.id === studentId);
-        if (studentIndex === -1) {
-            return { success: false, message: 'الطالب غير موجود' };
-        }
-
-        const existingStudent = this.data.students[studentIndex];
-
-        // **CRITICAL FIX: Preserve attendance data unless explicitly provided**
-        if (!updatedData.attendance) {
-            updatedData.attendance = existingStudent.attendance || {};
-        }
-
-        updatedData.updatedAt = new Date().toISOString();
-        this.data.students[studentIndex] = {
-            ...existingStudent,
-            ...updatedData
-        };
-
-        await this.autoSave();
-        return { success: true, message: 'تم تحديث الطالب بنجاح!' };
+async updateStudent(studentId, updatedData) {
+    const studentIndex = this.data.students.findIndex(s => s.id === studentId);
+    if (studentIndex === -1) {
+        return { success: false, message: 'الطالب غير موجود' };
     }
+
+    const existingStudent = this.data.students[studentIndex];
+
+    // 🔥 CRITICAL FIX: Always merge attendance data, never overwrite
+    if (updatedData.attendance) {
+        // If new attendance data is provided, merge it with existing
+        updatedData.attendance = {
+            ...existingStudent.attendance,
+            ...updatedData.attendance
+        };
+    } else {
+        // If no attendance data provided, preserve existing completely
+        updatedData.attendance = existingStudent.attendance || {};
+    }
+
+    updatedData.updatedAt = new Date().toISOString();
+    
+    this.data.students[studentIndex] = {
+        ...existingStudent,
+        ...updatedData
+    };
+
+    console.log(`📋 Student ${studentId} updated with attendance:`, this.data.students[studentIndex].attendance);
+
+    await this.autoSave();
+    return { success: true, message: 'تم تحديث الطالب بنجاح!' };
+}
+
 
 
     async deleteStudent(studentId) {
