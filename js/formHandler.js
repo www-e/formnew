@@ -7,7 +7,7 @@ class FormHandler {
         this.groupSelect = document.getElementById('groupTime');
         this.sectionGroup = document.getElementById('sectionGroup');
         this.editingId = null;
-        
+
         this.initializeEventListeners();
         this.initializeGradeData();
     }
@@ -67,7 +67,7 @@ class FormHandler {
                 this.studentIdInput.value = ''; // Clear if no grade or if editing
             }
         });
-        
+
         this.sectionSelect.addEventListener('change', (e) => this.handleSectionChange(e.target.value));
         this.form.addEventListener('submit', (e) => this.handleFormSubmit(e));
 
@@ -79,14 +79,14 @@ class FormHandler {
 
     handleGradeChange(grade) {
         this.clearSelects();
-        
+
         if (!grade) {
             this.sectionGroup.style.display = 'none';
             return;
         }
 
         const gradeData = this.gradeData[grade];
-        
+
         if (grade === 'first') {
             this.sectionGroup.style.display = 'none';
             this.sectionSelect.removeAttribute('required');
@@ -153,7 +153,7 @@ class FormHandler {
             e.target.classList.remove('border-red-500');
         }
     }
-    
+
     validateAmount(e) {
         if (parseFloat(e.target.value) < 0) {
             e.target.setCustomValidity('المبلغ لا يمكن أن يكون سالباً.');
@@ -166,10 +166,10 @@ class FormHandler {
 
     async handleFormSubmit(e) {
         e.preventDefault();
-        
+
         const formData = new FormData(this.form);
         const studentData = {
-            id: this.editingId || this.studentIdInput.value, // Use new ID or existing one
+            id: this.editingId || this.studentIdInput.value,
             name: formData.get('studentName').trim(),
             studentPhone: formData.get('studentPhone'),
             parentPhone: formData.get('parentPhone'),
@@ -178,6 +178,10 @@ class FormHandler {
             groupTime: formData.get('groupTime'),
             paidAmount: parseFloat(formData.get('paidAmount'))
         };
+
+        // **CRITICAL FIX: Don't include attendance in form updates**
+        // This prevents overwriting attendance when editing student info
+        // (attendance should only be modified by attendance page)
 
         studentData.gradeName = this.gradeData[studentData.grade].name;
         if (studentData.section) {
@@ -190,11 +194,12 @@ class FormHandler {
             this.showLoading(true);
             let result;
             if (this.editingId) {
+                // **CRITICAL: When editing, preserve existing attendance**
                 result = await window.storageManager.updateStudent(this.editingId, studentData);
             } else {
                 result = await window.storageManager.saveStudent(studentData);
             }
-            
+
             if (result.success) {
                 window.app.showSuccessMessage(result.message);
                 this.resetForm();
@@ -210,7 +215,8 @@ class FormHandler {
             this.showLoading(false);
         }
     }
-    
+
+
     editStudentById(studentId) {
         const student = window.storageManager.getAllStudents().find(s => s.id === studentId);
         if (student) {
@@ -221,7 +227,7 @@ class FormHandler {
     editStudent(student) {
         this.editingId = student.id;
         this.studentIdInput.value = student.id; // Show existing ID when editing
-        
+
         document.getElementById('studentName').value = student.name;
         document.getElementById('studentPhone').value = student.studentPhone;
         document.getElementById('parentPhone').value = student.parentPhone;
@@ -229,7 +235,7 @@ class FormHandler {
         document.getElementById('paidAmount').value = student.paidAmount;
 
         this.handleGradeChange(student.grade);
-        
+
         // Use setTimeout to ensure the DOM has updated with the new options
         setTimeout(() => {
             if (student.section) {

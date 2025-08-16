@@ -83,12 +83,23 @@ class StorageManager {
             return { success: false, message: 'الطالب غير موجود' };
         }
 
-        updatedData.updatedAt = new Date().toISOString();
-        this.data.students[studentIndex] = { ...this.data.students[studentIndex], ...updatedData };
+        const existingStudent = this.data.students[studentIndex];
 
-        await this.autoSave(); // Auto-save instead of manual
+        // **CRITICAL FIX: Preserve attendance data unless explicitly provided**
+        if (!updatedData.attendance) {
+            updatedData.attendance = existingStudent.attendance || {};
+        }
+
+        updatedData.updatedAt = new Date().toISOString();
+        this.data.students[studentIndex] = {
+            ...existingStudent,
+            ...updatedData
+        };
+
+        await this.autoSave();
         return { success: true, message: 'تم تحديث الطالب بنجاح!' };
     }
+
 
     async deleteStudent(studentId) {
         const initialLength = this.data.students.length;

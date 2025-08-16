@@ -29,19 +29,25 @@ class AttendancePage {
     }
 
     getGroupSchedules() {
-        // Defines the days of the week for each group value. (0=Sun, 1=Mon, ..., 6=Sat)
+        // This MUST match exactly with the group options in formHandler.js!
         return {
+            // First grade groups
             'sat_tue_315': { days: [6, 2], text: 'السبت والثلاثاء - 3:15 م' },
             'sat_tue_430': { days: [6, 2], text: 'السبت والثلاثاء - 4:30 م' },
             'sun_wed_200': { days: [0, 3], text: 'الأحد والأربعاء - 2:00 م' },
             'mon_thu_200': { days: [1, 4], text: 'الاثنين والخميس - 2:00 م' },
+
+            // Second grade groups
             'sat_tue_200': { days: [6, 2], text: 'السبت والثلاثاء - 2:00 م' },
             'sun_wed_315': { days: [0, 3], text: 'الأحد والأربعاء - 3:15 م' },
             'mon_thu_315': { days: [1, 4], text: 'الاثنين والخميس - 3:15 م' },
+
+            // Third grade groups - THIS WAS MISSING!
             'sat_tue_thu_1200': { days: [6, 2, 4], text: 'السبت والثلاثاء والخميس - 12:00 م' },
             'sun_wed_430': { days: [0, 3], text: 'الأحد والأربعاء - 4:30 م' }
         };
     }
+
 
     async initialize() {
         console.log(`✅ Attendance System v${this.version} initialized.`);
@@ -95,12 +101,20 @@ class AttendancePage {
         const seenGroups = new Set();
 
         this.allStudents.forEach(student => {
-            if ((selectedGrade === 'all' || student.grade === selectedGrade) && !seenGroups.has(student.groupTime)) {
-                this.groupFilter.add(new Option(student.groupTimeText, student.groupTime));
-                seenGroups.add(student.groupTime);
+            if ((selectedGrade === 'all' || student.grade === selectedGrade) &&
+                !seenGroups.has(student.groupTime)) {
+                // Verify this group exists in our schedules
+                if (this.groupSchedules[student.groupTime]) {
+                    this.groupFilter.add(new Option(student.groupTimeText, student.groupTime));
+                    seenGroups.add(student.groupTime);
+                } else {
+                    console.warn('Student has unknown group:', student.groupTime, 'for student:', student.name);
+                }
             }
         });
     }
+
+
 
     goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.render(); }
     goToNextMonth() { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.render(); }
@@ -157,22 +171,31 @@ class AttendancePage {
 
         students.forEach((student, index) => {
             bodyHTML += `
-            <tr class="table-row">
-                <td class="border p-2 text-center font-bold">${index + 1}</td>
-                <td class="border p-2 text-center font-mono text-sm">${student.id}</td>
-                <td class="border p-2 font-semibold">${student.name}</td>
-        `;
+        <tr class="table-row">
+            <td class="border p-2 text-center font-bold">${index + 1}</td>
+            <td class="border p-2 text-center font-mono text-sm">${student.id}</td>
+            <td class="border p-2 font-semibold">${student.name}</td>
+    `;
 
             dates.forEach(date => {
-                const dateString = date.toISOString().split('T')[0];
+                // **CRITICAL FIX: Use local date string consistently**
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+
                 const statusKey = student.attendance ? student.attendance[dateString] : undefined;
                 const status = statusMap[statusKey] || defaultStatus;
+
                 bodyHTML += `<td class="border p-2 text-center ${status.class}">${status.text}</td>`;
             });
             bodyHTML += '</tr>';
         });
+
         this.tableBody.innerHTML = bodyHTML;
     }
+
+
 
 
     render() {

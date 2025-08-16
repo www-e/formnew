@@ -42,7 +42,7 @@ class QuickAttendance {
         this.messageEl.className = isError ? 'text-sm text-red-600 mt-2 font-bold' : 'text-sm text-green-600 mt-2 font-bold';
     }
 
-    handleSubmit(event) {
+    async handleSubmit(event) {
         event.preventDefault();
         const studentId = this.studentIdInput.value.trim();
         if (!studentId) {
@@ -56,14 +56,24 @@ class QuickAttendance {
             return;
         }
 
-        // --- Crucial Validation Logic ---
+        // **FIXED: Use local date consistently**
         const today = new Date();
-        const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD
-        const todayDayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+        const todayDayOfWeek = today.getDay();
+
+        // **FIXED: Create local date string instead of UTC**
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const todayString = `${year}-${month}-${day}`;
 
         // Find the student's group schedule
         const groupSchedule = window.attendancePage.groupSchedules[student.groupTime];
-        if (!groupSchedule || !groupSchedule.days.includes(todayDayOfWeek)) {
+        if (!groupSchedule) {
+            this.showMessage(`مجموعة الطالب غير موجودة في النظام: ${student.groupTime}`, true);
+            return;
+        }
+
+        if (!groupSchedule.days.includes(todayDayOfWeek)) {
             this.showMessage(`اليوم ليس من الأيام المحددة لمجموعة هذا الطالب.`, true);
             return;
         }
@@ -73,24 +83,32 @@ class QuickAttendance {
             return;
         }
 
-        // All checks passed, mark as present
+        // **CRITICAL FIX: Ensure attendance object exists**
         if (!student.attendance) {
             student.attendance = {};
         }
         student.attendance[todayString] = 'present';
 
-        // **FIX: Auto-save the attendance data immediately**
-        this.storageManager.autoSave();
+        // **CRITICAL FIX: Await the save to ensure persistence**
+        try {
+            await this.storageManager.autoSave();
+            console.log(`✅ Attendance saved for ${student.name}:`, student.attendance);
 
-        this.showMessage(`تم تسجيل حضور الطالب: ${student.name}`);
+            this.showMessage(`تم تسجيل حضور الطالب: ${student.name}`);
+            this.studentIdInput.value = '';
 
-        // Clear the input for the next entry
-        this.studentIdInput.value = '';
+            // **CRITICAL FIX: Force UI refresh immediately**
+            if (this.onAttendanceMarked) {
+                this.onAttendanceMarked();
+            }
+        } catch (error) {
+            console.error('❌ Failed to save attendance:', error);
+            this.showMessage('فشل في حفظ الحضور. حاول مرة أخرى.', true);
 
-        // Notify the main page to refresh its table view
-        if (this.onAttendanceMarked) {
-            this.onAttendanceMarked();
+            // **ROLLBACK: Remove the attendance since save failed**
+            delete student.attendance[todayString];
         }
     }
+
 
 }
