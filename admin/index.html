@@ -14,14 +14,20 @@
 <body class="bg-gray-50 font-arabic">
     <header class="bg-white shadow-md sticky top-0 z-40">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-user-graduate text-purple-600 ml-2"></i>الأستاذ <span class="text-sm text-red-500 font-normal">(لوحة التحكم)</span></h1>
-             <nav class="hidden md:flex gap-6 items-center">
-                <a href="../students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
-                <a href="../attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
-                <a href="../payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
+            <h1 class="text-2xl font-bold text-gray-800"><i
+                    class="fas fa-user-graduate text-purple-600 ml-2"></i>الأستاذ <span
+                    class="text-sm text-red-500 font-normal">(لوحة التحكم)</span></h1>
+            <nav class="hidden md:flex gap-6 items-center">
+                <a href="../students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة
+                    الطلاب</a>
+                <a href="../attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة
+                    الحضور</a>
+                <a href="../payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة
+                    المدفوعات</a>
             </nav>
             <div class="flex items-center gap-4">
-                <div id="db-status" class="text-gray-500 flex items-center"><i class="fas fa-spinner fa-spin ml-2"></i>جاري التحميل...</div>
+                <div id="db-status" class="text-gray-500 flex items-center"><i
+                        class="fas fa-spinner fa-spin ml-2"></i>جاري التحميل...</div>
                 <a href="../index.html"
                     class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"><i
                         class="fas fa-home ml-1"></i></a>
@@ -49,7 +55,8 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button id="clearFiltersBtn" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                    <button id="clearFiltersBtn"
+                        class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
                         <i class="fas fa-eraser ml-1"></i>مسح الفلاتر
                     </button>
                 </div>
@@ -76,36 +83,69 @@
     </main>
 
     <!-- Edit Student Modal -->
-    <div id="edit-student-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="edit-student-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-4xl modal-fade-in">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">تعديل بيانات الطالب</h2>
             <form id="edit-student-form"></form> <!-- Form content will be injected by JS -->
             <div class="flex justify-end gap-4 mt-6">
-                <button id="modal-cancel-btn" type="button" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">إلغاء</button>
-                <button id="modal-save-btn" type="submit" form="edit-student-form" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">حفظ التغييرات</button>
+                <button id="modal-cancel-btn" type="button"
+                    class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600">إلغاء</button>
+                <button id="modal-save-btn" type="submit" form="edit-student-form"
+                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">حفظ التغييرات</button>
             </div>
         </div>
     </div>
-    
+
     <!-- Manage Attendance Modal -->
-    <div id="attendance-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="attendance-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-3xl modal-fade-in">
-             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">إدارة حضور الطالب: <span id="attendance-student-name" class="text-purple-600"></span></h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">إدارة حضور: <span id="attendance-student-name"
+                        class="text-purple-600"></span></h2>
+                <div id="attendance-header-controls" class="flex items-center gap-2">
+                    <button id="attendance-prev-month-btn"
+                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i
+                            class="fas fa-arrow-right"></i></button>
+                    <div id="attendance-month-display" class="text-lg font-bold text-gray-700 w-32 text-center"></div>
+                    <button id="attendance-next-month-btn"
+                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i
+                            class="fas fa-arrow-left"></i></button>
+                </div>
                 <button id="attendance-modal-close-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
             </div>
-            <div id="attendance-calendar" class="grid grid-cols-7 gap-2 text-center"></div>
+            <div id="attendance-calendar" class="grid grid-cols-7 gap-2 text-center">
+                <!-- Calendar days will be injected by JS -->
+            </div>
         </div>
     </div>
-    
+
     <!-- Manage Payments Modal -->
     <div id="payments-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-2xl modal-fade-in">
-             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">إدارة مدفوعات الطالب: <span id="payment-student-name" class="text-green-600"></span></h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">إدارة مدفوعات: <span id="payment-student-name"
+                        class="text-green-600"></span></h2>
+                <div id="payment-header-controls" class="flex items-center gap-2">
+                    <button id="payment-prev-year-btn"
+                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i
+                            class="fas fa-arrow-right"></i></button>
+                    <div id="payment-year-display" class="text-lg font-bold text-gray-700 w-24 text-center"></div>
+                    <button id="payment-next-year-btn"
+                        class="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"><i
+                            class="fas fa-arrow-left"></i></button>
+                </div>
+                <div class="my-4 p-3 bg-gray-100 rounded-lg flex items-center justify-between">
+                    <label for="permanent-exemption-toggle" class="font-semibold text-gray-700">إعفاء دائم من
+                        المصاريف</label>
+                    <input type="checkbox" id="permanent-exemption-toggle" class="h-6 w-6">
+                </div>
                 <button id="payments-modal-close-btn" class="text-gray-500 hover:text-gray-800 text-2xl">×</button>
             </div>
-            <div id="payments-list" class="space-y-4"></div>
+            <div id="payments-list" class="space-y-4">
+                <!-- Payment list will be injected by JS -->
+            </div>
         </div>
     </div>
 
@@ -118,4 +158,5 @@
     <script src="./admin.js"></script> <!-- The logic for this page -->
 
 </body>
+
 </html>

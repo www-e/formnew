@@ -42,31 +42,17 @@ class FileManager {
                 return { success: true, isNew: false, data: data };
             }
 
-            // Migration from JSON file
-            console.log("⚠️ No IndexedDB data, trying JSON file...");
-            try {
-                const response = await fetch('./data/database.json');
-                if (response.ok) {
-                    data = await response.json();
-                    console.log("📦 Migrating JSON data to IndexedDB...");
-                    await this.dbManager.setData(this.DB_KEY, data);
-                    return { success: true, isNew: false, data: data };
-                }
-            } catch (jsonError) {
-                console.log("📄 No JSON file found, creating fresh data");
-            }
-
-            // Create fresh database
+            // If no IndexedDB data, create a fresh database directly
+            console.log("🆕 No data found, creating fresh database...");
             data = { 
                 students: [], 
                 settings: { 
                     lastId: 0,
-                    version: "2.0.0",
+                    version: "3.0.0",
                     created: new Date().toISOString()
                 }
             };
             await this.dbManager.setData(this.DB_KEY, data);
-            console.log("🆕 Fresh database created");
             
             return { success: true, isNew: true, data: data };
 

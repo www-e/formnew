@@ -117,7 +117,7 @@ class PaymentsPage {
         this.renderTableBody();
     }
 
-    renderTableBody() {
+renderTableBody() {
         if (this.filteredStudents.length === 0) {
             this.tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-12 text-gray-500">لا يوجد طلاب يطابقون الفلتر الحالي.</td></tr>`;
             return;
@@ -129,14 +129,20 @@ class PaymentsPage {
         const monthKey = `${year}-${month}`;
 
         this.filteredStudents.forEach((student, index) => {
-            const payment = student.payments ? student.payments[monthKey] : null;
             const requiredAmount = this.storageManager.getRequiredPayment(student.grade, student.section);
             
+            // Exemption Check
+            const isPermanentlyExempt = student.isExempt === true;
+            const isMonthExempt = isPermanentlyExempt || (typeof student.isExempt === 'object' && student.isExempt && student.isExempt[monthKey]);
+
+            const payment = student.payments ? student.payments[monthKey] : null;
             let statusBadge = '<span class="bg-red-200 text-red-800 px-3 py-1 rounded-full text-sm">لم يدفع</span>';
             let amountPaid = '---';
             let paymentDate = '---';
 
-            if (payment) {
+            if (isMonthExempt) {
+                statusBadge = '<span class="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm">معفى</span>';
+            } else if (payment) {
                 if (payment.amountPaid >= requiredAmount) {
                     statusBadge = '<span class="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm">مدفوع</span>';
                 } else {
@@ -149,6 +155,7 @@ class PaymentsPage {
             }
             
             const sectionDisplay = student.sectionName ? `<span class="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">${student.sectionName}</span>` : '<span class="text-gray-400">-</span>';
+            const requiredDisplay = isMonthExempt ? '0 جنيه' : `${requiredAmount.toLocaleString('ar-EG')} جنيه`;
 
             bodyHTML += `
                 <tr class="table-row">
@@ -159,7 +166,7 @@ class PaymentsPage {
                     <td class="border p-2 text-center">${sectionDisplay}</td>
                     <td class="border p-2 text-center">${statusBadge}</td>
                     <td class="border p-2 text-center font-semibold">${amountPaid}</td>
-                    <td class="border p-2 text-center">${requiredAmount.toLocaleString('ar-EG')} جنيه</td>
+                    <td class="border p-2 text-center">${requiredDisplay}</td>
                     <td class="border p-2 text-center text-sm">${paymentDate}</td>
                 </tr>
             `;

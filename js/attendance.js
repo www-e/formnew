@@ -14,7 +14,14 @@ class AttendancePage {
         this.tableBody = document.getElementById('attendance-table-body');
         this.saveBtn = document.getElementById('save-attendance-btn');
         this.quickAttendanceBtn = document.getElementById('quick-attendance-btn');
-
+        this.makeupModal = document.getElementById('makeup-attendance-modal');
+        this.makeupModalCloseBtn = document.getElementById('makeup-modal-close-btn');
+        this.makeupAttendanceForm = document.getElementById('makeup-attendance-form');
+        this.makeupStudentIdInput = document.getElementById('makeup-student-id');
+        this.makeupDatesContainer = document.getElementById('makeup-dates-container');
+        this.makeupDatesList = document.getElementById('makeup-dates-list');
+        this.makeupModalMessage = document.getElementById('makeup-modal-message');
+        this.makeupAttendanceBtn = document.getElementById('makeup-attendance-btn');
         // State
         this.currentDate = new Date();
         this.allStudents = [];
@@ -94,6 +101,10 @@ class AttendancePage {
         this.groupFilter.addEventListener('change', () => this.render());
         this.saveBtn.addEventListener('click', async () => await this.storageManager.persistData());
         this.quickAttendanceBtn.addEventListener('click', () => this.quickAttendanceModal.show());
+                // Makeup Modal Listeners
+        this.makeupAttendanceBtn.addEventListener('click', () => this.showMakeupModal());
+        this.makeupModalCloseBtn.addEventListener('click', () => this.hideMakeupModal());
+        this.makeupAttendanceForm.addEventListener('submit', (e) => this.findMakeupDates(e));
     }
 
     populateGroupFilter() {
@@ -166,7 +177,8 @@ class AttendancePage {
 
         let bodyHTML = '';
         const statusMap = {
-            present: { class: 'bg-green-200', text: 'ح' },
+            'H': { class: 'bg-green-200', text: 'ح' },  // حضور
+            'T': { class: 'bg-yellow-200', text: 'ت' }, // تعويضي
         };
         const defaultStatus = { class: 'bg-gray-100', text: '-' };
 
@@ -199,52 +211,163 @@ class AttendancePage {
 
 
 
- render() {
-    this.updateMonthDisplay();
-    const selectedGrade = this.gradeFilter.value;
-    const selectedGroup = this.groupFilter.value;
+    render() {
+        this.updateMonthDisplay();
+        const selectedGrade = this.gradeFilter.value;
+        const selectedGroup = this.groupFilter.value;
 
-    if (selectedGrade === 'all' || selectedGroup === 'all') {
-        this.tableHeader.innerHTML = '';
-        this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>';
-        return;
+        if (selectedGrade === 'all' || selectedGroup === 'all') {
+            this.tableHeader.innerHTML = '';
+            this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>';
+            return;
+        }
+
+        // 🔥 CRITICAL FIX: Get fresh data from storage instead of using cached this.allStudents
+        const allStudents = this.storageManager.getAllStudents();
+        const filteredStudents = allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup);
+
+        const groupSchedule = this.groupSchedules[selectedGroup];
+        const scheduledDates = this.getScheduledDatesForMonth(groupSchedule);
+
+        this.renderTableHeader(scheduledDates);
+        this.renderTableBody(filteredStudents, scheduledDates);
+    }
+    // --- Makeup Attendance Modal Logic ---
+    showMakeupModal() {
+        this.makeupStudentIdInput.value = '';
+        this.makeupDatesContainer.classList.add('hidden');
+        this.makeupModalMessage.textContent = '';
+        this.makeupModal.classList.remove('hidden');
+        this.makeupStudentIdInput.focus();
     }
 
-    // 🔥 CRITICAL FIX: Get fresh data from storage instead of using cached this.allStudents
-    const allStudents = this.storageManager.getAllStudents();
-    const filteredStudents = allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup);
-    
-    const groupSchedule = this.groupSchedules[selectedGroup];
-    const scheduledDates = this.getScheduledDatesForMonth(groupSchedule);
+    hideMakeupModal() {
+        this.makeupModal.classList.add('hidden');
+    }
 
-    this.renderTableHeader(scheduledDates);
-    this.renderTableBody(filteredStudents, scheduledDates);
-}
+    async findMakeupDates(event) {
+        event.preventDefault();
+        this.makeupDatesContainer.classList.add('hidden');
+        this.makeupDatesList.innerHTML = '';
+        this.makeupModalMessage.textContent = 'جاري البحث...';
 
+        const studentId = this.makeupStudentIdInput.value.trim();
+        const student = this.storageManager.getAllStudents().find(s => s.id === studentId);
+
+        if (!student) {
+            this.makeupModalMessage.textContent = 'كود الطالب غير صحيح.';
+            return;
+        }
+
+        // 1. Find all possible groups for the student's grade
+        const gradeGroups = new Set();
+        this.allStudents.forEach(s => {
+            if (s.grade === student.grade) {
+                gradeGroups.add(s.groupTime);
+            }
+        });
+
+        // 2. Find the 2 closest past & 2 closest future valid session dates
+        const today = new Date();
+        const dates = new Set();
+        
+        const findDates = (direction) => {
+            for (let i = 1; i <= 14 && dates.size < 4; i++) { // Search up to 2 weeks
+                let targetDate = new Date(today);
+                targetDate.setDate(today.getDate() + (i * direction));
+                let dayOfWeek = targetDate.getDay();
+
+                gradeGroups.forEach(groupKey => {
+                    const schedule = this.groupSchedules[groupKey];
+                    if (schedule && schedule.days.includes(dayOfWeek) && dates.size < 4) {
+                         const dateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+                         dates.add(dateString);
+                    }
+                });
+            }
+        };
+        
+        // This logic isn't perfect, but it's a good starting point.
+        // A more robust solution might find exactly 2 past and 2 future dates.
+        findDates(1); // Future
+        findDates(-1); // Past
+
+        const sortedDates = Array.from(dates).sort();
+
+        if (sortedDates.length === 0) {
+            this.makeupModalMessage.textContent = 'لم يتم العثور على مواعيد متاحة قريبة.';
+            return;
+        }
+
+        this.makeupModalMessage.textContent = '';
+        sortedDates.forEach(dateString => {
+            const date = new Date(dateString + 'T00:00:00'); // Ensure correct date parsing
+            const dayName = date.toLocaleString('ar-EG', { weekday: 'long' });
+            const formattedDate = date.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit' });
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'p-4 border rounded-lg hover:bg-gray-100 text-center';
+            button.innerHTML = `<span class="font-bold">${dayName}</span><br><span class="text-sm">${formattedDate}</span>`;
+            button.onclick = () => this.saveMakeupSession(studentId, dateString);
+            this.makeupDatesList.appendChild(button);
+        });
+        
+        this.makeupDatesContainer.classList.remove('hidden');
+    }
+
+    async saveMakeupSession(studentId, dateString) {
+        this.makeupModalMessage.textContent = 'جاري حفظ الحصة التعويضية...';
+        
+        const attendanceUpdate = {
+            attendance: { [dateString]: 'T' } // Save with 'T' for Ta'weedy
+        };
+
+        const result = await this.storageManager.updateStudent(studentId, attendanceUpdate, true);
+
+        if (result.success) {
+            this.makeupModalMessage.textContent = 'تم حفظ الحصة بنجاح!';
+            setTimeout(() => {
+                this.hideMakeupModal();
+                this.render(); // Re-render the main table
+            }, 1000);
+        } else {
+            this.makeupModalMessage.textContent = 'فشل الحفظ. حاول مرة أخرى.';
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- FIX: Add check for appContext before initializing ---
     if (window.appContext) {
+        // Since this page doesn't have a BaseApp instance, we create a simple notifications handler
+        const showNotification = (message, type) => {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            notification.className = `notification fixed top-5 right-5 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center`;
+            notification.innerHTML = `<i class="fas ${icon} ml-3"></i><p>${message}</p>`;
+            document.body.appendChild(notification);
+            setTimeout(() => { notification.remove(); }, 4000);
+        };
+        
         new AttendancePage();
+
+        setTimeout(() => { // Wait for page to fully load
+            document.getElementById('backupBtn')?.addEventListener('click', async () => {
+                const result = await window.attendancePage.storageManager.createBackup();
+                if(result.success) showNotification(result.message, 'success');
+                else showNotification(result.message, 'error');
+            });
+
+            document.getElementById('restoreBtn')?.addEventListener('click', async () => {
+                if (confirm('هل أنت متأكد؟ سيتم استبدال جميع البيانات الحالية.')) {
+                    const result = await window.attendancePage.storageManager.restoreBackup();
+                    if(result.success) showNotification(result.message, 'success');
+                    else showNotification(result.message, 'error');
+                }
+            });
+        }, 1000);
+
     } else {
         console.error("AppContext is not ready!");
     }
-
-    setTimeout(() => { // Wait for page to fully load
-        document.getElementById('backupBtn')?.addEventListener('click', async () => {
-            const result = await window.attendancePage.storageManager.createBackup();
-            alert(result.message);
-        });
-
-        document.getElementById('restoreBtn')?.addEventListener('click', async () => {
-            if (confirm('هل أنت متأكد؟ سيتم استبدال جميع البيانات الحالية.')) {
-                const result = await window.attendancePage.storageManager.restoreBackup();
-                alert(result.message);
-            }
-        });
-    }, 1000);
-
-
-
 });

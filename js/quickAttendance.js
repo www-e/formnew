@@ -92,7 +92,7 @@ async handleSubmit(event) {
             // Mark attendance
             this.showMessage('جاري الحفظ...', false);
             const attendanceUpdate = {
-                attendance: { [todayString]: 'present' }
+                attendance: { [todayString]: 'H' }
             };
             const result = await this.storageManager.updateStudent(studentId, attendanceUpdate, true); // Use merge update
             

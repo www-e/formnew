@@ -40,44 +40,54 @@ class TableManager {
     }
 
     applyFilters() {
-        let filtered = [...this.students];
-
-        // Apply search filter
-        if (this.currentFilters.search) {
-            const searchTerm = this.currentFilters.search.toLowerCase();
-            filtered = filtered.filter(student =>
-                student.name.toLowerCase().includes(searchTerm) ||
-                student.studentPhone.includes(searchTerm) ||
-                student.parentPhone.includes(searchTerm)
-            );
+        if (this.tableBody) {
+            this.tableBody.style.opacity = '0.5'; // Show loading state
         }
 
-        // Apply grade filter
-        if (this.currentFilters.grade) {
-            filtered = filtered.filter(student => student.grade === this.currentFilters.grade);
-        }
+        // Use a timeout to allow the UI to update before the heavy filtering logic runs
+        setTimeout(() => {
+            let filtered = [...this.students];
 
-        // Apply sorting
-        switch (this.currentFilters.sort) {
-            case 'newest':
-                filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                break;
-            case 'oldest':
-                filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-                break;
-            case 'name':
-                filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-                break;
-            case 'amount_high':
-                filtered.sort((a, b) => b.paidAmount - a.paidAmount);
-                break;
-            case 'amount_low':
-                filtered.sort((a, b) => a.paidAmount - b.paidAmount);
-                break;
-        }
+            // Apply search filter
+            if (this.currentFilters.search) {
+                const searchTerm = this.currentFilters.search.toLowerCase();
+                filtered = filtered.filter(student =>
+                    student.name.toLowerCase().includes(searchTerm) ||
+                    student.studentPhone.includes(searchTerm) ||
+                    student.parentPhone.includes(searchTerm)
+                );
+            }
 
-        this.filteredStudents = filtered;
-        this.renderTable();
+            // Apply grade filter
+            if (this.currentFilters.grade) {
+                filtered = filtered.filter(student => student.grade === this.currentFilters.grade);
+            }
+
+            // Apply sorting
+            switch (this.currentFilters.sort) {
+                case 'newest':
+                    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    break;
+                case 'oldest':
+                    filtered.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    break;
+                case 'name':
+                    filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+                    break;
+                case 'amount_high':
+                    filtered.sort((a, b) => b.paidAmount - a.paidAmount);
+                    break;
+                case 'amount_low':
+                    filtered.sort((a, b) => a.paidAmount - b.paidAmount);
+                    break;
+            }
+
+            this.filteredStudents = filtered;
+            this.renderTable();
+            if (this.tableBody) {
+                this.tableBody.style.opacity = '1'; // Hide loading state
+            }
+        }, 10); // 10ms timeout is enough for the UI to respond
     }
 
     clearFilters() {
