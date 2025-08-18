@@ -69,10 +69,12 @@ class StorageManager {
 
         studentData.createdAt = new Date().toISOString();
         studentData.updatedAt = studentData.createdAt;
-        studentData.attendance = {};
+        studentData.attendance = {}; // Ensure it's an empty object
+        studentData.payments = {};   // Ensure it's an empty object
+        studentData.isExempt = false; // Default to not exempt
 
         this.data.students.push(studentData);
-        await this.autoSave(); // Auto-save instead of manual
+        await this.autoSave();
 
         return { success: true, message: 'تم إضافة الطالب بنجاح!' };
     }
