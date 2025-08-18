@@ -19,11 +19,38 @@ class StorageManager {
     }
 
     // AUTO-SAVE: Called after every change
-    async autoSave() {
-        if (this.fileManager) {
-            const result = await this.fileManager.saveFile(this.data);
-            if (!result.success) {
-                console.error("Auto-save failed:", result.error);
+    async autoSave(showIndicator = true) {
+        if (showIndicator) this.showSavingIndicator(true);
+        try {
+            if (this.fileManager) {
+                const result = await this.fileManager.saveFile(this.data);
+                if (!result.success) {
+                    console.error("Auto-save failed:", result.error);
+                    if (window.app) window.app.showErrorMessage("فشل الحفظ التلقائي!");
+                }
+            }
+        } catch (error) {
+            console.error("Critical auto-save error:", error);
+            if (window.app) window.app.showErrorMessage("خطأ جسيم أثناء الحفظ!");
+        } finally {
+            if (showIndicator) {
+                // Keep the indicator for a short period to feel intentional
+                setTimeout(() => this.showSavingIndicator(false), 500);
+            }
+        }
+    }
+
+    showSavingIndicator(isSaving) {
+        const statusEl = document.getElementById('db-status');
+        if (!statusEl) return;
+
+        if (isSaving) {
+            this.originalStatusHTML = statusEl.innerHTML;
+            statusEl.innerHTML = '<i class="fas fa-save text-blue-500 fa-fade ml-2"></i><span class="text-blue-600">جاري الحفظ...</span>';
+        } else {
+            // Restore original status only if it was set
+            if (this.originalStatusHTML) {
+                statusEl.innerHTML = this.originalStatusHTML;
             }
         }
     }
@@ -53,6 +80,7 @@ class StorageManager {
             const result = await this.fileManager.importBackup();
             if (result.success && result.data) {
                 this.loadData(result.data);
+                await this.autoSave(); // Ensure the restored data is saved
                 // Refresh the page to update UI
                 window.location.reload();
             }
@@ -129,6 +157,9 @@ async updateStudent(studentId, updatedData, mergeNested = false) {
         return { success: true, message: 'تم حذف الطالب بنجاح!' };
     }
 
+    // This function generates a random ID for a new student.
+    // While collisions are unlikely, it's not guaranteed to be unique for a very large number of students.
+    // For a more robust solution, a library like UUID could be used.
     generateId(grade) {
         let uniqueId = '';
         let isUnique = false;

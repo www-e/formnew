@@ -3,34 +3,7 @@ class FileManager {
     constructor() {
         this.DB_KEY = "center_data";
         this.dbManager = new DatabaseManager();
-        this.setupAutoBackup();
-    }
-
-    // Auto-backup every 30 minutes
-    setupAutoBackup() {
-        setInterval(() => {
-            this.performAutoBackup();
-        }, 30 * 60 * 1000); // 30 minutes
-    }
-
-    async performAutoBackup() {
-        try {
-            const data = await this.dbManager.getData(this.DB_KEY);
-            if (data && data.students && data.students.length > 0) {
-                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-                const filename = `auto_backup_${timestamp}.json`;
-                
-                const json = JSON.stringify(data, null, 2);
-                
-                // Try to save silently (modern browsers only)
-                if ('showSaveFilePicker' in window) {
-                    console.log(`📋 Auto-backup ready: ${filename} (${data.students.length} students)`);
-                }
-            }
-        } catch (error) {
-            console.log('Auto-backup check failed:', error);
-        }
-    }
+        
 
     async loadFile() {
         try {

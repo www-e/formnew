@@ -18,11 +18,11 @@
                     class="fas fa-user-graduate text-purple-600 ml-2"></i>الأستاذ <span
                     class="text-sm text-red-500 font-normal">(لوحة التحكم)</span></h1>
             <nav class="hidden md:flex gap-6 items-center">
-                <a href="../students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة
+                <a href="../features/students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة
                     الطلاب</a>
-                <a href="../attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة
+                <a href="../features/attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة
                     الحضور</a>
-                <a href="../payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة
+                <a href="../features/payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة
                     المدفوعات</a>
             </nav>
             <div class="flex items-center gap-4">
@@ -150,11 +150,11 @@
     </div>
 
 
-    <!-- Scripts are loaded from the parent directory -->
-    <script src="../js/db.js"></script>
-    <script src="../js/fileManager.js"></script>
-    <script src="../js/storage.js"></script>
-    <script src="../js/main.js"></script>
+    <!-- Scripts are loaded from the new features directory -->
+    <script src="../features/core/services/db.js"></script>
+    <script src="../features/core/services/fileManager.js"></script>
+    <script src="../features/core/services/storage.js"></script>
+    <script src="../features/core/main.js"></script>
     <script src="./admin.js"></script> <!-- The logic for this page -->
 
 </body>

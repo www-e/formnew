@@ -83,14 +83,24 @@ class PaymentsPage {
     populateGroupFilter() {
         this.groupFilter.innerHTML = '<option value="all">كل المجموعات</option>';
         const selectedGrade = this.gradeFilter.value;
-        const seenGroups = new Set();
+        if (selectedGrade === 'all') {
+            return;
+        }
 
-        this.allStudents.forEach(student => {
-            if ((selectedGrade === 'all' || student.grade === selectedGrade) && student.groupTime && !seenGroups.has(student.groupTime)) {
-                this.groupFilter.add(new Option(student.groupTimeText, student.groupTime));
-                seenGroups.add(student.groupTime);
+        const groups = this.allStudents
+            .filter(student => student.grade === selectedGrade)
+            .map(student => ({ value: student.groupTime, text: student.groupTimeText }))
+            .filter((group, index, self) => self.findIndex(g => g.value === group.value) === index);
+
+        groups.forEach(group => {
+            if (group.value) {
+                this.groupFilter.add(new Option(group.text, group.value));
             }
         });
+
+        if (groups.length === 1) {
+            this.groupFilter.value = groups[0].value;
+        }
     }
 
     goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.render(); }
@@ -255,10 +265,3 @@ renderTableBody() {
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.appContext) {
-        new PaymentsPage();
-    } else {
-        console.error("AppContext is not ready!");
-    }
-});

@@ -256,11 +256,3 @@ class AdminPage {
     }
 }
 
-let adminPage;
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.appContext) {
-        adminPage = new AdminPage();
-    } else {
-        console.error("AppContext is not ready!");
-    }
-});

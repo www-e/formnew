@@ -155,9 +155,9 @@ class AttendancePage {
 
         let bodyHTML = '';
         const statusMap = {
-            'H': { class: 'bg-green-200', text: 'ح' },
-            'T': { class: 'bg-yellow-200', text: 'ت' },
-            'G': { class: 'bg-red-200 text-white', text: 'غ' },
+            'H': { class: 'bg-green-500 text-white font-bold', text: 'ح' },
+            'T': { class: 'bg-yellow-500 text-white font-bold', text: 'ت' },
+            'G': { class: 'bg-red-500 text-white font-bold', text: 'غ' },
         };
         const defaultStatus = { class: 'bg-gray-100', text: '-' };
 
@@ -204,20 +204,34 @@ class AttendancePage {
     }
     
     // --- Unchanged methods ---
-    populateGroupFilter() { this.groupFilter.innerHTML = '<option value="all">كل المجموعات</option>'; const selectedGrade = this.gradeFilter.value; const seenGroups = new Set(); this.allStudents.forEach(student => { if ((selectedGrade === 'all' || student.grade === selectedGrade) && !seenGroups.has(student.groupTime)) { if (this.groupSchedules[student.groupTime]) { this.groupFilter.add(new Option(student.groupTimeText, student.groupTime)); seenGroups.add(student.groupTime); } } }); }
-    goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.render(); }
-    goToNextMonth() { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.render(); }
+    populateGroupFilter() {
+        this.groupFilter.innerHTML = '<option value="all">كل المجموعات</option>';
+        const selectedGrade = this.gradeFilter.value;
+        if (selectedGrade === 'all') {
+            return;
+        }
+
+        const groups = this.allStudents
+            .filter(student => student.grade === selectedGrade)
+            .map(student => ({ value: student.groupTime, text: student.groupTimeText }))
+            .filter((group, index, self) => self.findIndex(g => g.value === group.value) === index);
+
+        groups.forEach(group => {
+            if (this.groupSchedules[group.value]) {
+                this.groupFilter.add(new Option(group.text, group.value));
+            }
+        });
+
+        if (groups.length === 1) {
+            this.groupFilter.value = groups[0].value;
+        }
+    }
+    goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.updateMonthDisplay(); this.tableHeader.innerHTML = ''; this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-info-circle text-4xl mb-3"></i><p>تم تغيير الشهر. يرجى اختيار مجموعة لعرض الحضور.</p></td></tr>'; }
+    goToNextMonth() { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.updateMonthDisplay(); this.tableHeader.innerHTML = ''; this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-info-circle text-4xl mb-3"></i><p>تم تغيير الشهر. يرجى اختيار مجموعة لعرض الحضور.</p></td></tr>'; }
     goToToday() { this.currentDate = new Date(); this.render(); }
     updateMonthDisplay() { this.monthDisplay.textContent = this.currentDate.toLocaleString('ar-EG', { month: 'long', year: 'numeric' }); }
     getScheduledDatesForMonth(groupSchedule) { if (!groupSchedule || !groupSchedule.days) return []; const year = this.currentDate.getFullYear(); const month = this.currentDate.getMonth(); const dates = []; const daysInMonth = new Date(year, month + 1, 0).getDate(); for (let day = 1; day <= daysInMonth; day++) { const date = new Date(year, month, day); if (groupSchedule.days.includes(date.getDay())) dates.push(date); } return dates; }
     renderTableHeader(dates) { const dayNames = ['احد', 'اثنين', 'ثلاثاء', 'اربعاء', 'خميس', 'جمعة', 'سبت']; let headerHTML = `<tr><th class="border p-2 text-center" style="width: 40px;">#</th><th class="border p-2 text-center" style="width: 120px;">كود الطالب</th><th class="border p-2 min-w-[200px]">اسم الطالب</th>`; dates.forEach(date => { headerHTML += `<th class="border p-2 text-center" style="width: 80px;">${dayNames[date.getDay()]}<br>${date.getDate()}</th>`; }); headerHTML += '</tr>'; this.tableHeader.innerHTML = headerHTML; }
-    render() { this.updateMonthDisplay(); const selectedGrade = this.gradeFilter.value; const selectedGroup = this.groupFilter.value; if (selectedGrade === 'all' || selectedGroup === 'all') { this.tableHeader.innerHTML = ''; this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>'; return; } const allStudents = this.storageManager.getAllStudents(); const filteredStudents = allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup); const groupSchedule = this.groupSchedules[selectedGroup]; const scheduledDates = this.getScheduledDatesForMonth(groupSchedule); this.renderTableHeader(scheduledDates); this.renderTableBody(filteredStudents, scheduledDates); }
+    render() { this.updateMonthDisplay(); const selectedGrade = this.gradeFilter.value; const selectedGroup = this.groupFilter.value; if (selectedGrade === 'all' || selectedGroup === 'all') { this.tableHeader.innerHTML = ''; this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-filter text-4xl mb-3"></i><p>اختر صفاً ومجموعة لعرض كشف الحضور</p></td></tr>'; return; } const filteredStudents = this.allStudents.filter(s => s.grade === selectedGrade && s.groupTime === selectedGroup); const groupSchedule = this.groupSchedules[selectedGroup]; const scheduledDates = this.getScheduledDatesForMonth(groupSchedule); this.renderTableHeader(scheduledDates); this.renderTableBody(filteredStudents, scheduledDates); }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.appContext) {
-        new AttendancePage();
-    } else {
-        console.error("AppContext is not ready!");
-    }
-});
