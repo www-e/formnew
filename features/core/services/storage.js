@@ -212,7 +212,7 @@ async updateStudent(studentId, updatedData, mergeNested = false) {
             return result;
         }
 
-        // --- Translation Maps ---
+        // --- Translation Maps (remain the same) ---
         const gradeMap = {
             'الصف الأول الثانوي': 'first',
             'الصف الثاني الثانوي': 'second',
@@ -238,44 +238,77 @@ async updateStudent(studentId, updatedData, mergeNested = false) {
             'الأحد والأربعاء - 4:30 م': 'sun_wed_430'
         };
 
-        let imported = 0;
-        let skipped = 0;
+        let importedCount = 0;
+        let updatedCount = 0;
+        let skippedCount = 0; // For records that cannot be processed
+
+        // Create a temporary array to hold the new set of students
+        const newStudentsData = [];
+        const existingStudentIds = new Set(this.data.students.map(s => s.id));
 
         for (const studentData of result.students) {
-            // Translate raw CSV data to system keys
-            const gradeKey = gradeMap[studentData.grade] || studentData.grade;
-            const sectionKey = sectionMap[studentData.section] || studentData.section;
-            const groupTimeKey = groupTimeMap[studentData.groupTime] || studentData.groupTime;
+            try {
+                // Translate raw CSV data to system keys
+                const gradeKey = gradeMap[studentData.grade] || studentData.grade;
+                const sectionKey = sectionMap[studentData.section] || studentData.section;
+                const groupTimeKey = groupTimeMap[studentData.groupTime] || studentData.groupTime;
 
-            // Prepend leading zero to phone numbers if missing
-            let studentPhone = studentData.studentPhone.startsWith('0') ? studentData.studentPhone : '0' + studentData.studentPhone;
-            
-            // Check for duplicate phone numbers
-            const isDuplicate = this.data.students.some(s => s.studentPhone === studentPhone);
+                // Prepend leading zero to phone numbers if missing
+                let studentPhone = studentData.studentPhone;
+                if (studentPhone && !studentPhone.startsWith('0')) {
+                    studentPhone = '0' + studentPhone;
+                }
 
-            if (!isDuplicate) {
-                studentData.id = this.generateId(gradeKey);
-                studentData.grade = gradeKey;
-                studentData.section = sectionKey;
-                studentData.groupTime = groupTimeKey;
-                studentData.studentPhone = studentPhone;
-                
-                // Add the display names
-                studentData.gradeName = this.getGradeName(gradeKey);
-                studentData.sectionName = this.getSectionName(gradeKey, sectionKey);
-                studentData.groupTimeText = this.getGroupTimeText(groupTimeKey);
+                // Construct the student object with translated and preserved data
+                const processedStudent = {
+                    id: studentData.id || this.generateId(gradeKey), // Use existing ID or generate new
+                    name: studentData.name,
+                    studentPhone: studentPhone,
+                    parentPhone: studentData.parentPhone,
+                    grade: gradeKey,
+                    section: sectionKey,
+                    groupTime: groupTimeKey,
+                    paidAmount: parseFloat(studentData.paidAmount || 0),
+                    attendance: studentData.attendance || {}, // Preserve attendance from CSV
+                    payments: studentData.payments || {},     // Preserve payments from CSV
+                    isExempt: studentData.isExempt || false,  // Preserve isExempt from CSV
+                    createdAt: studentData.createdAt || new Date().toISOString(), // Preserve createdAt
+                    updatedAt: studentData.updatedAt || new Date().toISOString(), // Preserve updatedAt
+                };
 
-                this.data.students.push(studentData);
-                imported++;
-            } else {
-                skipped++;
+                // Add the display names (these are derived, not stored directly)
+                processedStudent.gradeName = this.getGradeName(processedStudent.grade);
+                processedStudent.sectionName = this.getSectionName(processedStudent.grade, processedStudent.section);
+                processedStudent.groupTimeText = this.getGroupTimeText(processedStudent.groupTime);
+
+                // Check if student with this ID already exists
+                const existingStudentIndex = this.data.students.findIndex(s => s.id === processedStudent.id);
+
+                if (existingStudentIndex !== -1) {
+                    // Update existing student
+                    this.data.students[existingStudentIndex] = processedStudent;
+                    updatedCount++;
+                } else {
+                    // Add new student
+                    this.data.students.push(processedStudent);
+                    importedCount++;
+                }
+            } catch (error) {
+                console.error(`Error processing CSV row for student ${studentData.id || studentData.name}:`, error);
+                skippedCount++;
             }
         }
+
+        // After processing all students, ensure data consistency and save
+        // Re-calculate lastId if necessary (though with external IDs, it's less critical)
+        // For simplicity, we'll just rely on the IDs from CSV or newly generated ones.
+        // The `settings.lastId` is primarily for the `generateId` function's internal logic,
+        // which is now less relevant if IDs are coming from CSV.
 
         await this.autoSave();
         return {
             success: true,
-            message: `اكتمل الاستيراد! تم إضافة ${imported} طالب جديد. تم تجاهل ${skipped} طالب بسبب تكرار رقم الهاتف.`,
+            message: `اكتمل الاستيراد! تم إضافة ${importedCount} طالب جديد، وتحديث ${updatedCount} طالب. تم تجاهل ${skippedCount} سجل بسبب أخطاء.`
         };
     }
 

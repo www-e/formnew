@@ -47,32 +47,40 @@ class MakeupModal {
             return;
         }
 
-        const gradeGroups = new Set();
-        this.storageManager.getAllStudents().forEach(s => {
-            if (s.grade === student.grade && s.groupTime) {
-                gradeGroups.add(s.groupTime);
-            }
-        });
+        // Use the student's specific groupTime
+        const studentGroupKey = student.groupTime;
+        if (!studentGroupKey) {
+            this.messageEl.textContent = 'لا توجد مجموعة مسجلة لهذا الطالب.';
+            return;
+        }
+
+        const studentSchedule = this.groupSchedules[studentGroupKey];
+        if (!studentSchedule || !studentSchedule.days || studentSchedule.days.length === 0) {
+            this.messageEl.textContent = 'لا يوجد جدول زمني متاح لمجموعة الطالب.';
+            return;
+        }
 
         const today = new Date();
         const dates = new Set();
         
-        // A simple approach to get a mix of past and future dates
+        // Function to find valid dates matching the student's group schedule
         const findValidDates = (direction, count) => {
             let foundCount = 0;
-            for (let i = 1; i <= 14 && foundCount < count; i++) {
+            // Search up to 60 days in each direction to find enough dates
+            for (let i = 1; i <= 60 && foundCount < count; i++) {
                 let targetDate = new Date();
                 targetDate.setDate(today.getDate() + (i * direction));
-                let dayOfWeek = targetDate.getDay();
+                let dayOfWeek = targetDate.getDay(); // 0 for Sunday, 1 for Monday, etc.
 
-                gradeGroups.forEach(groupKey => {
-                    const schedule = this.groupSchedules[groupKey];
-                    if (schedule && schedule.days.includes(dayOfWeek)) {
-                        const dateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+                // Check if the targetDate's dayOfWeek matches any of the student's group schedule days
+                if (studentSchedule.days.includes(dayOfWeek)) {
+                    const dateString = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+                    // Ensure we don't add duplicate dates if a group has multiple days
+                    if (!dates.has(dateString)) {
                         dates.add(dateString);
                         foundCount++;
                     }
-                });
+                }
             }
         };
 
@@ -82,13 +90,14 @@ class MakeupModal {
         const sortedDates = Array.from(dates).sort();
 
         if (sortedDates.length === 0) {
-            this.messageEl.textContent = 'لم يتم العثور على مواعيد متاحة قريبة.';
+            this.messageEl.textContent = 'لم يتم العثور على مواعيد متاحة قريبة لمجموعة الطالب.';
             return;
         }
 
         this.messageEl.textContent = '';
+        // Display up to 4 dates (2 past, 2 future)
         sortedDates.slice(0, 4).forEach(dateString => {
-            const date = new Date(dateString + 'T00:00:00');
+            const date = new Date(dateString + 'T00:00:00'); // Add T00:00:00 to avoid timezone issues
             const dayName = date.toLocaleString('ar-EG', { weekday: 'long' });
             const formattedDate = date.toLocaleDateString('ar-EG', { day: '2-digit', month: '2-digit' });
             const button = document.createElement('button');

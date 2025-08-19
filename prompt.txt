@@ -1,0 +1,22 @@
+nice ,now i have some enhancments for ux and ui , the students table which is a        │
+│    continer holring the students contnet and also the attendance table and also the       │
+│    payment table and other tables, they only seem to take about 70-80 percent of hte page │
+│     , also the headers components the same , i want them to take up to 95 percent of the  │
+│    page width , i want the students in the first grade to have a bluish tint in the row   │
+│    and the second year a greenish one and the third is to ahve some brownish one ,i want  │
+│    u to make sure the navigation of the nav bar is correct based on teh page because      │
+│    sometimes it gives wrong navigation , lets analise and understand that correctly  , by │
+│     applying the change of making hte continers holding the tables and the tables and     │
+│    header contents to almost 95 percent of the page will allow betterview of the data and │
+│     the text in the pages ofcourse , after doing that i want u to make the fetching of    │
+│    the الحصة التعويضية modal that pops up to be samrter , because now it just finds the 2 │
+│     days before today and the 2 days after today , i want it to find the 2 days that      │
+│    match the student group day and actually availbe before and after , for example today  │
+│    is 19 , it should give me 12 16  , and 23 and 26 , because these are the actaul ones   │
+│    that are availble for hte student based on the group day ofcourse , when navigating    │
+│    back and forword via the nexta nd past month buttons on the attendance page it gives   │       
+│    me (تم تغيير الشهر يرحي اختيرا مجموعة لعرض الحضور) yet i choses correclty the filters  │       
+│    but didnt show any thing , lets analies and fix that please , i have added the error i │       
+│     am getting in the error.txt , its in the students list page , analisae that also ,    │       
+│    make sure u analsie and understand all of my requests and make sure u categorize them  │       
+│    and solve them in a smart way 

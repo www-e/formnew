@@ -122,24 +122,30 @@ class TableManager {
 
         this.filteredStudents.forEach((student, index) => {
             const row = document.createElement('tr');
-            row.className = 'table-row border-b border-gray-200';
-
+            let gradeBgClass = '';
+            if (student.grade === 'first') {
+                gradeBgClass = 'bg-blue-50'; // Tailwind class for light blue background
+            } else if (student.grade === 'second') {
+                gradeBgClass = 'bg-green-50'; // Tailwind class for light green background
+            } else if (student.grade === 'third') {
+                gradeBgClass = 'bg-amber-50'; // Tailwind class for light amber/brownish background
+            }
             // CRITICAL FIX: The student.id must be wrapped in quotes for the onclick handler
             row.innerHTML = `
-                <td class="border border-gray-300 px-4 py-3 text-center font-bold">${index + 1}</td>
-                <td class="border border-gray-300 px-4 py-3"><div class="font-mono font-bold text-gray-700">${student.id}</div></td>
-                <td class="border border-gray-300 px-4 py-3"><div class="font-semibold">${student.name}</div></td>
-                <td class="border border-gray-300 px-4 py-3"><div class="font-mono">${student.studentPhone}</div></td>
-                <td class="border border-gray-300 px-4 py-3"><div class="font-mono">${student.parentPhone}</div></td>
-                <td class="border border-gray-300 px-4 py-3"><span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${student.gradeName}</span></td>
-                <td class="border border-gray-300 px-4 py-3">${student.sectionName ? `<span class="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">${student.sectionName}</span>` : '<span class="text-gray-400">-</span>'}</td>
-                <td class="border border-gray-300 px-4 py-3"><div class="text-sm">${student.groupTimeText}</div></td>
-                <td class="border border-gray-300 px-4 py-3"><div class="font-semibold text-green-600">${student.paidAmount} جنيه</div></td>
-                <td class="border border-gray-300 px-4 py-3">
+                <td class="border border-gray-300 px-4 py-3 text-center font-bold ${gradeBgClass}">${index + 1}</td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}"><div class="font-mono font-bold text-gray-700">${student.id}</div></td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}"><div class="font-semibold">${student.name}</div></td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}"><div class="font-mono">${student.studentPhone}</div></td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}"><div class="font-mono">${student.parentPhone}</div></td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}"><span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">${student.gradeName}</span></td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}">${student.sectionName ? `<span class="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-sm">${student.sectionName}</span>` : '<span class="text-gray-400">-</span>'}</td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}"><div class="text-sm">${student.groupTimeText}</div></td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}"><div class="font-semibold text-green-600">${student.paidAmount} جنيه</div></td>
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}">
                     <div class="text-sm text-gray-600">${this.formatDate(student.createdAt)}</div>
                     ${student.updatedAt !== student.createdAt ? `<div class="text-xs text-gray-400">محدث: ${this.formatDate(student.updatedAt)}</div>` : ''}
                 </td>
-                <td class="border border-gray-300 px-4 py-3">
+                <td class="border border-gray-300 px-4 py-3 ${gradeBgClass}">
                     <div class="flex gap-2">
 <a href="students.html?edit=${student.id}" class="btn-edit bg-blue-500 text-white px-2 py-1 rounded text-sm hover:bg-blue-600 transition-colors"><i class="fas fa-edit"></i></a>                        <button onclick="tableManager.deleteStudent('${student.id}')" class="btn-delete bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition-colors"><i class="fas fa-trash"></i></button>
                     </div>

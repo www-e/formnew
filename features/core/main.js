@@ -18,6 +18,10 @@
 
     console.log("✅ Enhanced application context ready with IndexedDB!");
 
+    // Initialize AutoBackupManager
+    const autoBackupManager = new AutoBackupManager(storageManager);
+    autoBackupManager.start();
+
     document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('studentForm') || document.getElementById('studentsTableBody')) {
             new StudentsApp();

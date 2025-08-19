@@ -17,15 +17,16 @@ class ExportManager {
             let csvContent = '\uFEFF'; // BOM for UTF-8 to support Arabic in Excel
 
             const headers = [
-                'اسم الطالب', 'رقم هاتف الطالب', 'رقم هاتف ولي الأمر',
+                'كود الطالب', 'اسم الطالب', 'رقم هاتف الطالب', 'رقم هاتف ولي الأمر',
                 'الصف الدراسي', 'القسم', 'المجموعة والمعاد', 'المبلغ المدفوع',
-                'تاريخ التسجيل'
+                'الحضور', 'المدفوعات', 'معفى', 'تاريخ الإنشاء', 'تاريخ التعديل'
             ];
             
             csvContent += headers.join(',') + '\n';
 
             this.students.forEach(student => {
                 const row = [
+                    `"${student.id}"`,
                     `"${student.name}"`,
                     `"${student.studentPhone}"`,
                     `"${student.parentPhone}"`,
@@ -33,7 +34,11 @@ class ExportManager {
                     `"${student.sectionName || '-'}"`,
                     `"${student.groupTimeText}"`,
                     `"${student.paidAmount}"`,
-                    `"${new Date(student.createdAt).toLocaleString('ar-EG')}"`
+                    `"${JSON.stringify(student.attendance)}"`,
+                    `"${JSON.stringify(student.payments)}"`,
+                    `"${student.isExempt ? 'نعم' : 'لا'}"`,
+                    `"${student.createdAt}"`,
+                    `"${student.updatedAt}"`
                 ];
                 csvContent += row.join(',') + '\n';
             });

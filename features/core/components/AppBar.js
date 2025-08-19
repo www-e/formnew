@@ -3,33 +3,34 @@ const currentPath = window.location.pathname;
 
 const navLinks = {
     admin: `
-        <a href="../features/students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
-        <a href="../features/attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
-        <a href="../features/payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
+        <a href="/features/students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
+        <a href="/features/attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
+        <a href="/features/payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
     `,
     attendance: `
-        <a href="../students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
-        <a href="../students/students.html" class="text-gray-600 hover:text-blue-600 transition-colors">إضافة طالب</a>
-        <a href="../payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
+        <a href="/features/students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
+        <a href="/features/students/students.html" class="text-gray-600 hover:text-blue-600 transition-colors">إضافة طالب</a>
+        <a href="/features/payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
     `,
     payments: `
-        <a href="../students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
-        <a href="../students/students.html" class="text-gray-600 hover:text-blue-600 transition-colors">إضافة طالب</a>
-        <a href="../attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
+        <a href="/features/students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
+        <a href="/features/students/students.html" class="text-gray-600 hover:text-blue-600 transition-colors">إضافة طالب</a>
+        <a href="/features/attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
     `,
     students: `
-    <a href="./students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
-    <a href="./students.html" class="text-gray-600 hover:text-blue-600 transition-colors">إضافة طالب</a>
-    <a href="../attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
-    <a href="../payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
+    <a href="/features/students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
+    <a href="/features/students/students.html" class="text-gray-600 hover:text-blue-600 transition-colors">إضافة طالب</a>
+    <a href="/features/attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
+    <a href="/features/payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
 `,
 };
 
 function getPageType() {
-    if (currentPath.includes('/admin/')) return 'admin';
-    if (currentPath.includes('/attendance/')) return 'attendance';
-    if (currentPath.includes('/payments/')) return 'payments';
-    if (currentPath.includes('/students/')) return 'students';
+    if (currentPath.includes('/admin/admin.html')) return 'admin';
+    if (currentPath.includes('/features/attendance/attendance.html')) return 'attendance';
+    if (currentPath.includes('/features/payments/payments.html')) return 'payments';
+    // For students, there are two main pages: students.html and students-list.html
+    if (currentPath.includes('/features/students/students.html') || currentPath.includes('/features/students/students-list.html')) return 'students';
     return 'default';
 }
 
@@ -55,7 +56,7 @@ class AppBar extends HTMLElement {
     render() {
         this.innerHTML = `
             <header class="bg-white shadow-md sticky top-0 z-40">
-                <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="w-[95%] mx-auto px-4 py-4 flex justify-between items-center">
                     <h1 class="text-2xl font-bold text-gray-800">
                         <i class="fas fa-user-graduate text-purple-600 ml-2"></i>${this.pageTitle}
                     </h1>

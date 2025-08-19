@@ -7,22 +7,22 @@
     <title>إدارة الطلاب</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
+    <link href="../css/styles.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-50 font-arabic">
 
     <header class="bg-white shadow-md sticky top-0 z-40">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div class="w-[95%] mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-user-graduate text-purple-600 ml-2"></i>الأستاذ</h1>
             <nav class="hidden md:flex gap-6 items-center">
-                <a href="students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
-                <a href="attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
-                <a href="payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
+                <a href="/features/students/students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
+                <a href="/features/attendance/attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
+                <a href="/features/payments/payments.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة المدفوعات</a>
             </nav>
             <div class="flex items-center gap-4">
                 <div id="db-status" class="text-gray-500 flex items-center"><i class="fas fa-spinner fa-spin ml-2"></i>جاري التحميل...</div>
-                <a href="index.html"
+                <a href="/index.html"
                     class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"><i
                         class="fas fa-home ml-1"></i></a>
             </div>
@@ -30,7 +30,7 @@
     </header>
 
     <main id="main-content"
-        class="container mx-auto px-4 py-8 opacity-25 pointer-events-none transition-opacity duration-500">
+        class="w-[95%] mx-auto px-4 py-8 opacity-25 pointer-events-none transition-opacity duration-500">
         <!-- Statistics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
             <div class="bg-white rounded-lg shadow p-6 text-center stat-card">
@@ -224,6 +224,7 @@
     <script src="../core/services/db.js"></script> <!-- MUST be first -->
     <script src="../core/services/fileManager.js"></script>
     <script src="../core/services/storage.js"></script>
+    <script src="../core/services/autoBackup.js"></script>
     <script src="../core/main.js"></script>
     <script src="../core/BaseApp.js"></script>
     <script src="./formHandler.js"></script>

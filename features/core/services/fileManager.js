@@ -96,20 +96,44 @@ class FileManager {
             const columns = lines[i].split(separator).map(col => col.replace(/"/g, '').trim());
             
             // Ensure the row has enough columns and a name
-            if (columns.length >= 6 && columns[0]) {
+            if (columns.length >= 13 && columns[1]) {
                 const student = {
-                    name: columns[0],
-                    studentPhone: columns[1],
-                    parentPhone: columns[2],
-                    grade: columns[3], // Raw text like "الصف الأول الثانوي"
-                    section: columns[4] || '', // Raw text
-                    groupTime: columns[5], // Raw text
-                    paidAmount: parseFloat(columns[6].replace('جنيه', '')) || 0,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    attendance: {},
-                    payments: {} // Initialize payments object
+                    id: columns[0], // New: Student ID
+                    name: columns[1],
+                    studentPhone: columns[2],
+                    parentPhone: columns[3],
+                    grade: columns[4], // Raw text like "الصف الأول الثانوي"
+                    section: columns[5] || '', // Raw text
+                    groupTime: columns[6], // Raw text
+                    paidAmount: parseFloat(columns[7].replace('جنيه', '')) || 0,
+                    attendance: {}, // Will be parsed from CSV
+                    payments: {},   // Will be parsed from CSV
+                    isExempt: false, // Will be parsed from CSV
+                    createdAt: new Date().toISOString(), // Will be parsed from CSV
+                    updatedAt: new Date().toISOString()  // Will be parsed from CSV
                 };
+
+                // Parse attendance and payments (JSON strings)
+                try {
+                    student.attendance = columns[8] ? JSON.parse(columns[8]) : {};
+                } catch (e) {
+                    console.warn(`Failed to parse attendance for student ${student.id || student.name}:`, columns[8], e);
+                    student.attendance = {};
+                }
+                try {
+                    student.payments = columns[9] ? JSON.parse(columns[9]) : {};
+                } catch (e) {
+                    console.warn(`Failed to parse payments for student ${student.id || student.name}:`, columns[9], e);
+                    student.payments = {};
+                }
+
+                // Parse isExempt
+                student.isExempt = columns[10] === 'نعم';
+
+                // Preserve createdAt and updatedAt from CSV
+                student.createdAt = columns[11] || new Date().toISOString();
+                student.updatedAt = columns[12] || new Date().toISOString();
+
                 students.push(student);
             }
         }

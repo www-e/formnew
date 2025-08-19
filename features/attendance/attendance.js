@@ -226,8 +226,8 @@ class AttendancePage {
             this.groupFilter.value = groups[0].value;
         }
     }
-    goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.updateMonthDisplay(); this.tableHeader.innerHTML = ''; this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-info-circle text-4xl mb-3"></i><p>تم تغيير الشهر. يرجى اختيار مجموعة لعرض الحضور.</p></td></tr>'; }
-    goToNextMonth() { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.updateMonthDisplay(); this.tableHeader.innerHTML = ''; this.tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-12 text-gray-500"><i class="fas fa-info-circle text-4xl mb-3"></i><p>تم تغيير الشهر. يرجى اختيار مجموعة لعرض الحضور.</p></td></tr>'; }
+    goToPreviousMonth() { this.currentDate.setMonth(this.currentDate.getMonth() - 1); this.render(); }
+    goToNextMonth() { this.currentDate.setMonth(this.currentDate.getMonth() + 1); this.render(); }
     goToToday() { this.currentDate = new Date(); this.render(); }
     updateMonthDisplay() { this.monthDisplay.textContent = this.currentDate.toLocaleString('ar-EG', { month: 'long', year: 'numeric' }); }
     getScheduledDatesForMonth(groupSchedule) { if (!groupSchedule || !groupSchedule.days) return []; const year = this.currentDate.getFullYear(); const month = this.currentDate.getMonth(); const dates = []; const daysInMonth = new Date(year, month + 1, 0).getDate(); for (let day = 1; day <= daysInMonth; day++) { const date = new Date(year, month, day); if (groupSchedule.days.includes(date.getDay())) dates.push(date); } return dates; }
