@@ -7,26 +7,11 @@
     <title>إدارة المدفوعات</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="css/styles.css" rel="stylesheet">
+    <link href="../../css/styles.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-50 font-arabic">
-    <header class="bg-white shadow-md sticky top-0 z-40">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-user-graduate text-purple-600 ml-2"></i>الأستاذ</h1>
-            <nav class="hidden md:flex gap-6 items-center">
-                <a href="students-list.html" class="text-gray-600 hover:text-blue-600 transition-colors">قائمة الطلاب</a>
-                <a href="students.html" class="text-gray-600 hover:text-blue-600 transition-colors">إضافة طالب</a>
-                <a href="attendance.html" class="text-gray-600 hover:text-blue-600 transition-colors">إدارة الحضور</a>
-            </nav>
-            <div class="flex items-center gap-4">
-                <div id="db-status" class="text-gray-500 flex items-center"><i class="fas fa-spinner fa-spin ml-2"></i>جاري التحميل...</div>
-                <a href="index.html"
-                    class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"><i
-                        class="fas fa-home ml-1"></i></a>
-            </div>
-        </div>
-    </header>
+    <app-bar page-title="إدارة المدفوعات"></app-bar>
 
     <main id="main-content"
         class="container mx-auto px-4 py-8 opacity-25 pointer-events-none transition-opacity duration-500">
@@ -105,6 +90,7 @@
     <!-- End Quick Payment Modal -->
 
     <!-- Scripts -->
+    <script src="../core/components/AppBar.js"></script>
     <script src="../core/services/db.js"></script>
     <script src="../core/services/fileManager.js"></script>
     <script src="../core/services/storage.js"></script>

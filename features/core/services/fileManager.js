@@ -3,6 +3,7 @@ class FileManager {
     constructor() {
         this.DB_KEY = "center_data";
         this.dbManager = new DatabaseManager();
+    }
         
 
     async loadFile() {

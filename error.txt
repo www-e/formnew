@@ -1,0 +1,48 @@
+payment page
+(index):64 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+(anonymous) @ (index):64
+payments.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/payments/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+fileManager.js:8 Uncaught SyntaxError: Unexpected identifier 'loadFile'
+main.js:3 🚀 Initializing enhanced application context...
+main.js:6 Uncaught ReferenceError: FileManager is not defined
+    at main.js:6:25
+    at main.js:32:3
+payments.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/payments/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+
+attendance page
+attendance.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/attendance/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+hook.js:608 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+overrideMethod @ hook.js:608
+attendance.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/attendance/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+fileManager.js:8 Uncaught SyntaxError: Unexpected identifier 'loadFile'
+main.js:3 🚀 Initializing enhanced application context...
+main.js:6 Uncaught ReferenceError: FileManager is not defined
+    at main.js:6:25
+    at main.js:32:3
+attendance.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/attendance/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+
+
+
+students pagestudents.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/students/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+hook.js:608 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+overrideMethod @ hook.js:608
+students.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/students/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+fileManager.js:8 Uncaught SyntaxError: Unexpected identifier 'loadFile'
+main.js:3 🚀 Initializing enhanced application context...
+main.js:6 Uncaught ReferenceError: FileManager is not defined
+    at main.js:6:25
+    at main.js:32:3
+students.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/students/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+
+
+students list 
+students-list.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/students/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+hook.js:608 cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+overrideMethod @ hook.js:608
+students-list.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/students/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+fileManager.js:8 Uncaught SyntaxError: Unexpected identifier 'loadFile'
+main.js:3 🚀 Initializing enhanced application context...
+main.js:6 Uncaught ReferenceError: FileManager is not defined
+    at main.js:6:25
+    at main.js:32:3
+students-list.html:1 Refused to apply style from 'http://127.0.0.1:5500/features/students/css/styles.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
